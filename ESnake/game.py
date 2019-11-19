@@ -1,4 +1,5 @@
-from .Components import Player
+from .player import Player
+from .input import PyGameInput
 
 class Game:
     def __init__(self):
@@ -6,6 +7,7 @@ class Game:
         self.player = Player()
 
         self.components = []
+        self.components.append(PyGameInput())
         self.components.append(self.player)
 
     def run(self):
