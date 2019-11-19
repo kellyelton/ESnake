@@ -16,7 +16,11 @@ class Game:
         try:
             while self.state == "running":
                 for component in self.components:
-                    component.update(self)
+                    update_method = getattr(component, "update")
+                    if update_method != None and callable(update_method):
+                        component.update(self)
+                    else:
+                        component(self)
                 self.stop()
         finally:
             self.state = "stopped"
