@@ -1,15 +1,10 @@
 import pygame
 
 class PyGameEngine:
-    def __init__(self):
-        pass
     def init(self, game):
         print("engine init")
 
         pygame.init()
-
-        # Adds the draw method 
-        game.components.append(self.draw)
 
     def run(self, game):
         print("engine run")
@@ -21,6 +16,7 @@ class PyGameEngine:
 
         while game.state == "running":
             self.processEvents(game)
+            game.updateComponents()
             self.draw(game, screen)
 
     def processEvents(self, game):
@@ -37,6 +33,8 @@ class PyGameEngine:
                     game.player.direction = "up"
                 elif event.key == pygame.K_DOWN:
                     game.player.direction = "down"
+                elif event.key == pygame.K_ESCAPE:
+                    game.stop()
 
     def draw(self, game, screen):
         screen.fill(game.style.gameBackgroundColor)
