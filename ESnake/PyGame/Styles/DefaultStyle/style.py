@@ -8,6 +8,9 @@ class ClassicStyle:
         self.loadingTextColor = (200, 200, 200)
         self.loadingScreenFontSize = 64
         self.loadingScreenFont = self.getResourcePath("Fonts/Amatic-Bold.ttf")
+        self.inGameScoreTextColor = (200, 200, 200)
+        self.inGameScoreFontSize = 32
+        self.inGameScoreFont = self.getResourcePath("Fonts/Amatic-Bold.ttf")
 
     def getResourcePath(self, relativePath):
         rootDirectory = os.path.dirname(os.path.abspath(__file__))
