@@ -4,10 +4,11 @@ from .helpers import *
 from .styles import *
 
 class Game:
-    def __init__(self):
+    def __init__(self, config):
         self.name = "ESnake"
         self.state = ""
-        self.style = ClassicStyle()
+        self.style = config.style
+        self.config = config
         self.player = Player()
         self.engine = PyGameEngine()
 

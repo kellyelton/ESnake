@@ -9,15 +9,19 @@ class PyGameEngine:
     def run(self, game):
         print("engine run")
 
-        size = [1024, 768]
-        screen = pygame.display.set_mode(size)
+        screen = pygame.display.set_mode(game.config.screenSize)
 
         pygame.display.set_caption(game.name)
+
+        clock = pygame.time.Clock()
 
         while game.state == "running":
             self.processEvents(game)
             game.updateComponents()
             self.draw(game, screen)
+
+            # max fps 60
+            clock.tick(game.config.maxfps)
 
     def processEvents(self, game):
         for event in pygame.event.get():
@@ -38,3 +42,8 @@ class PyGameEngine:
 
     def draw(self, game, screen):
         screen.fill(game.style.gameBackgroundColor)
+
+        ## TODO: Draw stuff
+
+        ## flip buffer
+        pygame.display.flip()

@@ -8,13 +8,16 @@ Simple snake game
 import sys
 import traceback
 from ESnake.game import Game
+from ESnake.config import DefaultConfig
 
 
 if __name__=='__main__':
     try:
         print("Launching...")
 
-        game = Game()
+        config = DefaultConfig()
+
+        game = Game(config)
 
         game.run()
     except Exception as exception:
