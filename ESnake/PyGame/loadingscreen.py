@@ -40,5 +40,3 @@ class PyLoadingScreenEngine:
         textRect.center = pyscreen.get_rect().center
 
         pyscreen.blit(text, textRect)
-
-        #pygame.display.update(screen.blit(message, pos))
