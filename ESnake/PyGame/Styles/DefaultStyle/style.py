@@ -11,6 +11,7 @@ class ClassicStyle:
         self.inGameScoreTextColor = (200, 200, 200)
         self.inGameScoreFontSize = 32
         self.inGameScoreFont = self.getResourcePath("Fonts/Amatic-Bold.ttf")
+        self.playerColor = (255, 255, 255)
 
     def getResourcePath(self, relativePath):
         rootDirectory = os.path.dirname(os.path.abspath(__file__))
