@@ -9,6 +9,7 @@ import sys
 import traceback
 from ESnake.app import App 
 from ESnake.config import DefaultConfig
+from ESnake.PyGame.engine import PyGameEngine
 
 
 if __name__=='__main__':
@@ -17,7 +18,9 @@ if __name__=='__main__':
 
         config = DefaultConfig()
 
-        app = App(config)
+        engine = PyGameEngine()
+
+        app = App(engine, config)
 
         app.run()
     except Exception as exception:
