@@ -1,13 +1,16 @@
+import enum
 from .player import Player
 from .pygameengine import PyGameEngine
 from .helpers import *
 from .styles import *
+from .gamescreen import *
 
 class Game:
     def __init__(self, config):
         self.name = "ESnake"
         self.state = ""
         self.style = config.style
+        self.screen = GameScreen.Loading
         self.config = config
         self.player = Player()
         self.engine = PyGameEngine()
