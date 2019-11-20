@@ -1,7 +1,7 @@
 import enum
-from .player import Player
 from .helpers import *
 from .appscreen import AppScreen
+from .level import Level
 
 class App:
     def __init__(self, engine, config):
@@ -9,13 +9,13 @@ class App:
         self.state = ""
         self.screen = AppScreen.Loading
         self.config = config
-        self.player = Player()
         self.engine = engine
         self.score = 0
 
+        self.level = Level(100, 100)
+
         self.components = []
         self.components.append(self.engine)
-        self.components.append(self.player)
 
     def run(self):
         try:

@@ -8,13 +8,13 @@ class PyInGameScreenEngine:
     def processEvent(self, app, event):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
-                app.player.direction = "left"
+                app.level.playerDirection = "left"
             elif event.key == pygame.K_RIGHT:
-                app.player.direction = "right"
+                app.level.playerDirection = "right"
             elif event.key == pygame.K_UP:
-                app.player.direction = "up"
+                app.level.playerDirection = "up"
             elif event.key == pygame.K_DOWN:
-                app.player.direction = "down"
+                app.level.playerDirection = "down"
             elif event.key == pygame.K_ESCAPE:
                 app.screen = AppScreen.PostGame
 
@@ -26,7 +26,14 @@ class PyInGameScreenEngine:
         self.drawScore(app, pyscreen)
 
     def drawPlayer(self, app, pyscreen):
-        pass
+        playerLeft = app.level.playerLocation[0] * app.level.tileSize[0]
+        playerTop = app.level.playerLocation[1] * app.level.tileSize[1]
+        playerWidth = app.level.tileSize[0]
+        playerHeight = app.level.tileSize[1]
+
+        drawLocation = (playerLeft, playerTop, playerWidth, playerHeight)
+
+        pygame.draw.rect(pyscreen, app.engine.style.playerColor, drawLocation)
 
     def drawFood(self, app, pyscreen):
         pass
