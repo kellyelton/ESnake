@@ -43,7 +43,6 @@ class PyGameEngine:
 
         while game.state == "running":
             self.updateScreenEngine(game)
-            self._screenEngine.onFrame(game)
             self.processEvents(game)
             game.updateComponents()
             self.draw(game, pyscreen)
@@ -74,21 +73,18 @@ class PyLoadingScreenEngine:
     def __init__(self):
         self.__count = 0
 
-    def onFrame(self, game):
+    def processEvent(self, game, event):
+        pass
+
+    def draw(self, game, pyscreen):
         self.__count += 1
         if self.__count >= 240:
             game.screen = GameScreen.InGame
             self.__count = 0
 
-    def processEvent(self, game, event):
-        pass
-
-    def draw(self, game, pyscreen):
         pyscreen.fill(game.style.loadingBackgroundColor)
 
 class PyInGameScreenEngine:
-    def onFrame(self, game):
-        pass
     def processEvent(self, game, event):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
@@ -107,8 +103,6 @@ class PyInGameScreenEngine:
         ## TODO: Draw stuff
 
 class PyPostGameScreenEngine:
-    def onFrame(self, game):
-        pass
     def processEvent(self, game, event):
         pass
     def draw(self, game, pyscreen):
