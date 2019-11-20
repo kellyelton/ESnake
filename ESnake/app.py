@@ -3,14 +3,14 @@ from .player import Player
 from .pygameengine import PyGameEngine
 from .helpers import *
 from .styles import *
-from .gamescreen import *
+from .appscreen import AppScreen
 
-class Game:
+class App:
     def __init__(self, config):
         self.name = "ESnake"
         self.state = ""
         self.style = config.style
-        self.screen = GameScreen.Loading
+        self.screen = AppScreen.Loading
         self.config = config
         self.player = Player()
         self.engine = PyGameEngine()
