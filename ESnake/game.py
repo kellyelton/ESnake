@@ -1,11 +1,13 @@
 from .player import Player
-from .input import PyGameInput
 from .pygameengine import PyGameEngine
 from .helpers import *
+from .styles import *
 
 class Game:
     def __init__(self):
+        self.name = "ESnake"
         self.state = ""
+        self.style = ClassicStyle()
         self.player = Player()
         self.engine = PyGameEngine()
 
@@ -20,21 +22,10 @@ class Game:
                 if hasFunction(component, "init"):
                     component.init(self)
 
-            self.state = "starting"
-            for component in self.components:
-                if hasFunction(component, "start"):
-                    component.start(self)
-
             self.state = "running"
-            while self.state == "running":
-                for component in self.components:
-                    if hasFunction(component, "update"):
-                        component.update(self)
-                    else:
-                        component(self)
+            self.engine.run(self)
 
-                    if hasFunction(component, "draw"):
-                        component.draw(self)
+            while self.state == "running":
 
                 self.stop()
         finally:
@@ -42,3 +33,13 @@ class Game:
 
     def stop(self):
         self.state = "stopping"
+
+    def updateComponents(self):
+        for component in self.components:
+            if hasFunction(component, "update"):
+                component.update(self)
+            else:
+                component(self)
+
+            if hasFunction(component, "draw"):
+                component.draw(self)
