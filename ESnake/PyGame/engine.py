@@ -1,6 +1,9 @@
 import pygame
-from .helpers import *
-from .appscreen import AppScreen
+from ..helpers import *
+from ..appscreen import AppScreen
+from .loadingscreen import PyLoadingScreenEngine
+from .ingamescreen import PyInGameScreenEngine
+from .postgamescreen import PyPostGameScreenEngine
 
 class PyGameEngine:
     def init(self, app):
@@ -68,44 +71,3 @@ class PyGameEngine:
 
         ## flip buffer
         pygame.display.flip()
-
-class PyLoadingScreenEngine:
-    def __init__(self):
-        self.__count = 0
-
-    def processEvent(self, app, event):
-        pass
-
-    def draw(self, app, pyscreen):
-        self.__count += 1
-        if self.__count >= 240:
-            app.screen = AppScreen.InGame
-            self.__count = 0
-
-        pyscreen.fill(app.style.loadingBackgroundColor)
-
-class PyInGameScreenEngine:
-    def processEvent(self, app, event):
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_LEFT:
-                app.player.direction = "left"
-            elif event.key == pygame.K_RIGHT:
-                app.player.direction = "right"
-            elif event.key == pygame.K_UP:
-                app.player.direction = "up"
-            elif event.key == pygame.K_DOWN:
-                app.player.direction = "down"
-            elif event.key == pygame.K_ESCAPE:
-                app.screen = AppScreen.PostGame
-    def draw(self, app, pyscreen):
-        pyscreen.fill(app.style.gameBackgroundColor)
-
-        ## TODO: Draw stuff
-
-class PyPostGameScreenEngine:
-    def processEvent(self, app, event):
-        pass
-    def draw(self, app, pyscreen):
-        pyscreen.fill(app.style.postGameBackgroundColor)
-
-        ## TODO: Draw stuff
