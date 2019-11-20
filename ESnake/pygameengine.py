@@ -1,13 +1,13 @@
 import pygame
 from .helpers import *
-from .gamescreen import GameScreen
+from .appscreen import AppScreen
 
 class PyGameEngine:
-    def init(self, game):
+    def init(self, app):
         print("engine init")
 
         self._screenEngine = None
-        self._previousGameScreen = None
+        self._previousAppScreen = None
 
         pygame.init()
 
@@ -18,53 +18,53 @@ class PyGameEngine:
 
         self._screenEngine = screenEngine
 
-    def updateScreenEngine(self, game):
-        if self._previousGameScreen == game.screen: return
+    def updateScreenEngine(self, app):
+        if self._previousAppScreen == app.screen: return
 
-        self._previousGameScreen = game.screen
+        self._previousAppScreen = app.screen
 
-        if game.screen == GameScreen.Loading:
+        if app.screen == AppScreen.Loading:
             self.setScreenEngine(PyLoadingScreenEngine())
-        elif game.screen == GameScreen.InGame:
+        elif app.screen == AppScreen.InGame:
             self.setScreenEngine(PyInGameScreenEngine())
-        elif game.screen == GameScreen.PostGame:
+        elif app.screen == AppScreen.PostGame:
             self.setScreenEngine(PyPostGameScreenEngine())
         else:
             raise Exception("Not Implemented")
 
-    def run(self, game):
+    def run(self, app):
         print("engine run")
 
-        pyscreen = pygame.display.set_mode(game.config.screenSize)
+        pyscreen = pygame.display.set_mode(app.config.screenSize)
 
-        pygame.display.set_caption(game.name)
+        pygame.display.set_caption(app.name)
 
         clock = pygame.time.Clock()
 
-        while game.state == "running":
-            self.updateScreenEngine(game)
-            self.processEvents(game)
-            game.updateComponents()
-            self.draw(game, pyscreen)
+        while app.state == "running":
+            self.updateScreenEngine(app)
+            self.processEvents(app)
+            app.updateComponents()
+            self.draw(app, pyscreen)
 
             # max fps 60
-            clock.tick(game.config.maxfps)
+            clock.tick(app.config.maxfps)
 
-    def processEvents(self, game):
+    def processEvents(self, app):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                game.stop()
+                app.stop()
             elif self._screenEngine == None:
                 print(f"SKIPPING EVENT {event}")
             else:
                 print(f"processing {event}")
-                self._screenEngine.processEvent(game, event)
+                self._screenEngine.processEvent(app, event)
 
-    def draw(self, game, pyscreen):
+    def draw(self, app, pyscreen):
         if self._screenEngine == None:
             pass
         else:
-            self._screenEngine.draw(game, pyscreen)
+            self._screenEngine.draw(app, pyscreen)
 
         ## flip buffer
         pygame.display.flip()
@@ -73,39 +73,39 @@ class PyLoadingScreenEngine:
     def __init__(self):
         self.__count = 0
 
-    def processEvent(self, game, event):
+    def processEvent(self, app, event):
         pass
 
-    def draw(self, game, pyscreen):
+    def draw(self, app, pyscreen):
         self.__count += 1
         if self.__count >= 240:
-            game.screen = GameScreen.InGame
+            app.screen = AppScreen.InGame
             self.__count = 0
 
-        pyscreen.fill(game.style.loadingBackgroundColor)
+        pyscreen.fill(app.style.loadingBackgroundColor)
 
 class PyInGameScreenEngine:
-    def processEvent(self, game, event):
+    def processEvent(self, app, event):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
-                game.player.direction = "left"
+                app.player.direction = "left"
             elif event.key == pygame.K_RIGHT:
-                game.player.direction = "right"
+                app.player.direction = "right"
             elif event.key == pygame.K_UP:
-                game.player.direction = "up"
+                app.player.direction = "up"
             elif event.key == pygame.K_DOWN:
-                game.player.direction = "down"
+                app.player.direction = "down"
             elif event.key == pygame.K_ESCAPE:
-                game.screen = GameScreen.PostGame
-    def draw(self, game, pyscreen):
-        pyscreen.fill(game.style.gameBackgroundColor)
+                app.screen = AppScreen.PostGame
+    def draw(self, app, pyscreen):
+        pyscreen.fill(app.style.gameBackgroundColor)
 
         ## TODO: Draw stuff
 
 class PyPostGameScreenEngine:
-    def processEvent(self, game, event):
+    def processEvent(self, app, event):
         pass
-    def draw(self, game, pyscreen):
-        pyscreen.fill(game.style.postGameBackgroundColor)
+    def draw(self, app, pyscreen):
+        pyscreen.fill(app.style.postGameBackgroundColor)
 
         ## TODO: Draw stuff

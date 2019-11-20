@@ -7,7 +7,7 @@ Simple snake game
 
 import sys
 import traceback
-from ESnake.game import Game
+from ESnake.app import App 
 from ESnake.config import DefaultConfig
 
 
@@ -17,9 +17,9 @@ if __name__=='__main__':
 
         config = DefaultConfig()
 
-        game = Game(config)
+        app = App(config)
 
-        game.run()
+        app.run()
     except Exception as exception:
         exceptionString = traceback.format_exc()
         print(exceptionString, file=sys.stderr)
