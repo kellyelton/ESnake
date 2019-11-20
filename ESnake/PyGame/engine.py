@@ -29,7 +29,7 @@ class PyGameEngine:
         self._previousAppScreen = app.screen
 
         if app.screen == AppScreen.Loading:
-            self.setScreenEngine(PyLoadingScreenEngine())
+            self.setScreenEngine(PyLoadingScreenEngine(app))
         elif app.screen == AppScreen.InGame:
             self.setScreenEngine(PyInGameScreenEngine())
         elif app.screen == AppScreen.PostGame:
