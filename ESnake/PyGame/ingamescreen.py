@@ -15,6 +15,6 @@ class PyInGameScreenEngine:
             elif event.key == pygame.K_ESCAPE:
                 app.screen = AppScreen.PostGame
     def draw(self, app, pyscreen):
-        pyscreen.fill(app.style.gameBackgroundColor)
+        pyscreen.fill(app.engine.style.gameBackgroundColor)
 
         ## TODO: Draw stuff

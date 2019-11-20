@@ -14,4 +14,4 @@ class PyLoadingScreenEngine:
             app.screen = AppScreen.InGame
             self.__count = 0
 
-        pyscreen.fill(app.style.loadingBackgroundColor)
+        pyscreen.fill(app.engine.style.loadingBackgroundColor)
