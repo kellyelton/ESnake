@@ -14,6 +14,7 @@ class Game:
         self.config = config
         self.player = Player()
         self.engine = PyGameEngine()
+        self.score = 0
 
         self.components = []
         self.components.append(self.engine)
