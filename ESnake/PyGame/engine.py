@@ -4,6 +4,7 @@ from ..appscreen import AppScreen
 from .loadingscreen import PyLoadingScreenEngine
 from .ingamescreen import PyInGameScreenEngine
 from .postgamescreen import PyPostGameScreenEngine
+from .Styles import *
 
 class PyGameEngine:
     def init(self, app):
@@ -11,6 +12,7 @@ class PyGameEngine:
 
         self._screenEngine = None
         self._previousAppScreen = None
+        self.style = loadStyle(app.config.style)
 
         pygame.init()
 

@@ -1,14 +1,12 @@
 import enum
 from .player import Player
 from .helpers import *
-from .styles import *
 from .appscreen import AppScreen
 
 class App:
     def __init__(self, engine, config):
         self.name = "ESnake"
         self.state = ""
-        self.style = config.style
         self.screen = AppScreen.Loading
         self.config = config
         self.player = Player()
