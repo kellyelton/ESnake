@@ -11,6 +11,8 @@ class Level:
         self.playerLocations = [self.center]
         self.playerSpeed = 10 # Tiles per second
         self.playerLastTimeMoved = 0
+        self.playerDeathTime = 0
+        self.isPlayerDead = False
         self.foodLocation = self.randomLocation
     
     @property
@@ -34,47 +36,61 @@ class Level:
         return location
     
     def update(self, app, time):
-        minDelay = 1000 / self.playerSpeed
+        if not self.isPlayerDead:
+            minDelay = 1000 / self.playerSpeed
 
-        msSincePlayerLastMoved = time - self.playerLastTimeMoved
+            msSincePlayerLastMoved = time - self.playerLastTimeMoved
 
-        if msSincePlayerLastMoved >= minDelay:
-            self.playerLastTimeMoved = time
-            self.movePlayer(app)
+            if msSincePlayerLastMoved >= minDelay:
+                self.playerLastTimeMoved = time
+                self.movePlayer(app, time)
+        else:
+            msSincePlayerDied = time - self.playerDeathTime
 
-    def movePlayer(self, app):
-        newPlayerLocation = self.playerLocation
+            if msSincePlayerDied >= 3000:
+                app.screen = AppScreen.PostGame
 
-        newLocationContents = self.getContents(newPlayerLocation)
+    def movePlayer(self, app, time):
+        if self.playerDirection == None: return
+
+        oldLocation = self.playerLocations[0]
+        newLocation = oldLocation
+        removeTail = True
+
+        if self.playerDirection == "left":
+            newLocation = (oldLocation[0] - 1, oldLocation[1])
+        elif self.playerDirection == "right":
+            newLocation = (oldLocation[0] + 1, oldLocation[1])
+        elif self.playerDirection == "up":
+            newLocation = (oldLocation[0], oldLocation[1] - 1)
+        elif self.playerDirection == "down":
+            newLocation = (oldLocation[0], oldLocation[1] + 1)
+
+        newLocationContents = self.getContents(newLocation)
 
         if newLocationContents == "food":
             self.score += 1
             self.foodLocation = self.randomEmptyLocation
+            removeTail = False
         elif newLocationContents == "player":
-            app.screen = AppScreen.PostGame
-            return
+            self.isPlayerDead = True
+            self.playerDeathTime = time
         elif newLocationContents == "wall":
-            app.screen = AppScreen.PostGame 
-            return
+            self.isPlayerDead = True
+            self.playerDeathTime = time
 
-        if self.playerDirection == None:
-            return
-        elif self.playerDirection == "left":
-            newPlayerLocation = (self.playerLocation[0] - 1, self.playerLocation[1])
-        elif self.playerDirection == "right":
-            newPlayerLocation = (self.playerLocation[0] + 1, self.playerLocation[1])
-        elif self.playerDirection == "up":
-            newPlayerLocation = (self.playerLocation[0], self.playerLocation[1] - 1)
-        elif self.playerDirection == "down":
-            newPlayerLocation = (self.playerLocation[0], self.playerLocation[1] + 1)
+        self.playerLocations.insert(0, newLocation)
 
-        self.playerLocation = newPlayerLocation
+        if removeTail:
+            self.playerLocations.pop()
      
     def getContents(self, location):
-        if location == self.playerLocation:
-            return "player"
-        elif location == self.foodLocation:
+        if location == self.foodLocation:
             return "food"
+        
+        for playerLocation in self.playerLocations:
+            if location == playerLocation:
+                return "player"
         
         if location[0] < 0: return "wall"
         if location[0] > self.width: return "wall"
@@ -85,9 +101,11 @@ class Level:
         return None
 
     def isEmpty(self, location):
-        if location == self.playerLocation:
+        if location == self.foodLocation:
             return False
-        elif location == self.foodLocation:
-            return False
-        else:
-            return True
+
+        for playerLocation in self.playerLocations:
+            if location == playerLocation:
+                return False
+
+        return True
