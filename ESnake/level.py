@@ -2,6 +2,7 @@ class Level:
     def __init__(self, width, height):
         self.width = width
         self.height = height
+        self.score = 0
         self.playerDirection = None
         self.playerLocation = self.center
         self.foodLocation = self.randomLocation
