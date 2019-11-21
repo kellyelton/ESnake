@@ -3,6 +3,7 @@ from ..appscreen import AppScreen
 
 class PyInGameScreenEngine:
     def __init__(self, app, level):
+        self.__score = 0
         self.__scoreFont = pygame.font.Font(app.engine.style.inGameScoreFont, app.engine.style.inGameScoreFontSize)
         self.__level = level
 
@@ -53,10 +54,12 @@ class PyInGameScreenEngine:
         pygame.draw.rect(pyscreen, app.engine.style.playerColor, drawLocation, 0)
 
     def drawFood(self, app, pyscreen):
-        pass
+        drawLocation = self.getLocationRect(app, pyscreen, self.__level.foodLocation)
+
+        pygame.draw.rect(pyscreen, app.engine.style.foodColor, drawLocation, 0)
 
     def drawScore(self, app, pyscreen):
-        text = self.__scoreFont.render(str(app.score), True, app.engine.style.inGameScoreTextColor)
+        text = self.__scoreFont.render(str(self.__score), True, app.engine.style.inGameScoreTextColor)
 
         textRect = text.get_rect()
         textRect.topright = pyscreen.get_rect().topright
