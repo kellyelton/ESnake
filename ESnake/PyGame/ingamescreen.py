@@ -45,12 +45,19 @@ class PyInGameScreenEngine:
     def drawBorder(self, app, pyscreen):
         borderColor = (255, 255, 255)
 
+        tileSize = self.getTileSize(pyscreen)
+
         playRect = self.getPlayRectangle(pyscreen)
 
-        pygame.draw.line(pyscreen, borderColor, playRect.topleft, playRect.topright)
-        pygame.draw.line(pyscreen, borderColor, playRect.topleft, playRect.bottomleft)
-        pygame.draw.line(pyscreen, borderColor, playRect.topright, playRect.bottomright)
-        pygame.draw.line(pyscreen, borderColor, playRect.bottomleft, playRect.bottomright)
+        topRect = pygame.Rect(playRect.topleft, (playRect.width, tileSize))
+        leftRect = pygame.Rect(playRect.topleft, (tileSize, playRect.height))
+        rightRect = pygame.Rect((playRect.topright[0] - tileSize, playRect.topright[1]), (tileSize, playRect.height))
+        bottomRect = pygame.Rect((playRect.bottomleft[0], playRect.bottomleft[1] - tileSize), (playRect.width, tileSize))
+
+        pygame.draw.rect(pyscreen, borderColor, topRect, 0)
+        pygame.draw.rect(pyscreen, borderColor, leftRect, 0)
+        pygame.draw.rect(pyscreen, borderColor, rightRect, 0)
+        pygame.draw.rect(pyscreen, borderColor, bottomRect, 0)
 
     def drawPlayer(self, app, pyscreen):
         isFirstSection = True
