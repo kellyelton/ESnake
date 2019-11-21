@@ -16,26 +16,16 @@ class PyGameEngine:
 
         pygame.init()
 
-    def setScreenEngine(self, screenEngine):
+    @property
+    def screenEngine(self): return self._screenEngine
+
+    @screenEngine.setter
+    def screenEngine(self, screenEngine):
         if self._screenEngine != None:
             if hasFunction(self._screenEngine, "stop"):
                 self._screenEngine.stop()
 
         self._screenEngine = screenEngine
-
-    def updateScreenEngine(self, app):
-        if self._previousAppScreen == app.screen: return
-
-        self._previousAppScreen = app.screen
-
-        if app.screen == AppScreen.Loading:
-            self.setScreenEngine(PyLoadingScreenEngine(app))
-        elif app.screen == AppScreen.InGame:
-            self.setScreenEngine(PyInGameScreenEngine(app))
-        elif app.screen == AppScreen.PostGame:
-            self.setScreenEngine(PyPostGameScreenEngine())
-        else:
-            raise Exception("Not Implemented")
 
     def run(self, app):
         print("engine run")
@@ -47,9 +37,9 @@ class PyGameEngine:
         clock = pygame.time.Clock()
 
         while app.state == "running":
-            self.updateScreenEngine(app)
+            self.configureScreenEngine(app)
             self.processEvents(app)
-            app.updateComponents()
+            self.updateScreenEngine(app)
             self.draw(app, pyscreen)
 
             # max fps 60
@@ -73,3 +63,24 @@ class PyGameEngine:
 
         ## flip buffer
         pygame.display.flip()
+
+    def configureScreenEngine(self, app):
+        if self._previousAppScreen == app.screen: return
+
+        self._previousAppScreen = app.screen
+
+        self.screenEngine = self.createScreenEngine(app, app.screen)
+
+    def createScreenEngine(self, app, appScreen: AppScreen):
+        if app.screen == AppScreen.Loading:
+            return PyLoadingScreenEngine(app)
+        elif app.screen == AppScreen.InGame:
+            return PyInGameScreenEngine(app)
+        elif app.screen == AppScreen.PostGame:
+            return PyPostGameScreenEngine()
+        else:
+            raise Exception("Not Implemented")
+
+    def updateScreenEngine(self, app):
+        app.level.update(app)
+        #self.screenEngine.update(app)
