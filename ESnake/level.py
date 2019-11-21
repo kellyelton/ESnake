@@ -1,3 +1,6 @@
+import random
+from random import randint
+
 class Level:
     def __init__(self, width, height):
         self.width = width
@@ -10,11 +13,22 @@ class Level:
     @property
     def center(self):
         return (self.width / 2, self.height / 2)
-    
+
     @property
     def randomLocation(self):
-        #TODO actually randomize
-        return (12, 12)
+        x = randint(0, self.width)
+        y = randint(0, self.height)
+
+        return (x, y)
+    
+    @property
+    def randomEmptyLocation(self):
+        location = self.randomLocation
+
+        while not self.isEmpty(location):
+            location = self.randomLocation
+
+        return location
     
     def update(self, app):
         newPlayerLocation = self.playerLocation
@@ -31,3 +45,11 @@ class Level:
             newPlayerLocation = (self.playerLocation[0], self.playerLocation[1] + 1)
 
         self.playerLocation = newPlayerLocation
+
+    def isEmpty(self, location):
+        if location == self.playerLocation:
+            return False
+        elif location == self.foodLocation:
+            return False
+        else:
+            return True
