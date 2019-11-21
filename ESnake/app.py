@@ -9,7 +9,6 @@ class App:
         self.screen = AppScreen.Loading
         self.config = config
         self.engine = engine
-        self.score = 0
     def run(self):
         try:
             self.state = "initializing"
