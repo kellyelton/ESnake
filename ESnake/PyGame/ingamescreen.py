@@ -8,14 +8,20 @@ class PyInGameScreenEngine:
 
     def processEvent(self, app, event):
         if event.type == pygame.KEYDOWN:
+            canMoveBackwards = len(self.__level.playerLocations) == 1
+
             if event.key == pygame.K_LEFT:
-                self.__level.playerDirection = "left"
+                if canMoveBackwards or self.__level.playerDirection != "right":
+                    self.__level.playerDirection = "left"
             elif event.key == pygame.K_RIGHT:
-                self.__level.playerDirection = "right"
+                if canMoveBackwards or self.__level.playerDirection != "left":
+                    self.__level.playerDirection = "right"
             elif event.key == pygame.K_UP:
-                self.__level.playerDirection = "up"
+                if canMoveBackwards or self.__level.playerDirection != "down":
+                    self.__level.playerDirection = "up"
             elif event.key == pygame.K_DOWN:
-                self.__level.playerDirection = "down"
+                if canMoveBackwards or self.__level.playerDirection != "up":
+                    self.__level.playerDirection = "down"
             elif event.key == pygame.K_ESCAPE:
                 app.screen = AppScreen.PostGame
     
