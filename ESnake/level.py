@@ -51,11 +51,12 @@ class Level:
 
         if newLocationContents == "food":
             self.score += 1
+            self.foodLocation = self.randomEmptyLocation
         elif newLocationContents == "player":
             app.screen = AppScreen.PostGame
         elif newLocationContents == "wall":
-            app.screen = AppScreen.PostGame
-
+            app.screen = AppScreen.PostGame 
+     
     def getContents(self, location):
         if location == self.playerLocation:
             return "player"
