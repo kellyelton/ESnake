@@ -1,7 +1,7 @@
 import pygame
+from ..appscreen import AppScreen
 
 class PyPostGameScreenEngine:
-    def processEvent(self, app, event): pass
     def update(self, app): pass
 
     def __init__(self, app, level):
@@ -9,6 +9,13 @@ class PyPostGameScreenEngine:
         self.__gameOverFont = pygame.font.Font(app.engine.style.postGameGameOverFont, app.engine.style.postGameGameOverFontSize)
         self.__scoreFont = pygame.font.Font(app.engine.style.postGameScoreFont, app.engine.style.postGameScoreFontSize)
         self.__instructionsFont = pygame.font.Font(app.engine.style.postGameInstructionsFont, app.engine.style.postGameInstructionsFontSize)
+
+    def processEvent(self, app, event):
+        if event.type == pygame.KEYUP:
+            if event.key == pygame.K_ESCAPE:
+                app.stop()
+            elif event.key == pygame.K_RETURN:
+                app.screen = AppScreen.InGame
 
     def draw(self, app, pyscreen):
         pyscreen.fill(app.engine.style.postGameBackgroundColor)
