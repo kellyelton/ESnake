@@ -9,6 +9,8 @@ class Level:
         self.score = 0
         self.playerDirection = None
         self.playerLocation = self.center
+        self.playerSpeed = 10 # Tiles per second
+        self.playerLastTimeMoved = 0
         self.foodLocation = self.randomLocation
     
     @property
@@ -31,7 +33,16 @@ class Level:
 
         return location
     
-    def update(self, app):
+    def update(self, app, time):
+        minDelay = 1000 / self.playerSpeed
+
+        msSincePlayerLastMoved = time - self.playerLastTimeMoved
+
+        if msSincePlayerLastMoved >= minDelay:
+            self.playerLastTimeMoved = time
+            self.movePlayer(app)
+
+    def movePlayer(self, app):
         newPlayerLocation = self.playerLocation
 
         if self.playerDirection == None:

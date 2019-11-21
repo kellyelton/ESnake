@@ -20,7 +20,9 @@ class PyInGameScreenEngine:
                 app.screen = AppScreen.PostGame
     
     def update(self, app):
-        self.__level.update(app)
+        now = pygame.time.get_ticks()
+
+        self.__level.update(app, now)
 
     def draw(self, app, pyscreen):
         pyscreen.fill(app.engine.style.gameBackgroundColor)
