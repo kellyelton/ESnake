@@ -7,9 +7,9 @@ class Level:
         self.width = width
         self.height = height
         self.score = 0
-        self.playerDirection = None
+        self.playerDirection = "right"
         self.playerLocations = [self.center]
-        self.playerSpeed = 10 # Tiles per second
+        self.playerSpeed = 20 # Tiles per second
         self.playerLastTimeMoved = 0
         self.playerDeathTime = 0
         self.isPlayerDead = False
