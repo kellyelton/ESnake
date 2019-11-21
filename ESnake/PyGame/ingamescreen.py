@@ -43,17 +43,16 @@ class PyInGameScreenEngine:
         pygame.draw.line(pyscreen, borderColor, playRect.bottomleft, playRect.bottomright)
 
     def drawPlayer(self, app, pyscreen):
-        if not self.__level.isPlayerDead:
-            for playerLocation in self.__level.playerLocations:
-                drawLocation = self.getLocationRect(app, pyscreen, playerLocation)
+        isFirstSection = True
+        for playerLocation in self.__level.playerLocations:
+            drawLocation = self.getLocationRect(app, pyscreen, playerLocation)
 
-                pygame.draw.rect(pyscreen, app.engine.style.playerColor, drawLocation, 0)
-        else:
-            for playerLocation in self.__level.playerLocations:
-                drawLocation = self.getLocationRect(app, pyscreen, playerLocation)
-
+            if isFirstSection and self.__level.isPlayerDead:
                 pygame.draw.rect(pyscreen, app.engine.style.playerDeadColor, drawLocation, 0)
+            else:
+                pygame.draw.rect(pyscreen, app.engine.style.playerColor, drawLocation, 0)
 
+            isFirstSection = False
 
     def drawFood(self, app, pyscreen):
         drawLocation = self.getLocationRect(app, pyscreen, self.__level.foodLocation)
