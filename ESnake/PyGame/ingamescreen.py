@@ -27,27 +27,20 @@ class PyInGameScreenEngine:
     def draw(self, app, pyscreen):
         pyscreen.fill(app.engine.style.gameBackgroundColor)
 
+        self.drawBorder(app, pyscreen)
         self.drawFood(app, pyscreen)
         self.drawPlayer(app, pyscreen)
         self.drawScore(app, pyscreen)
-    
-    def getLocationRect(self, app, pyscreen, location):
-        size = pyscreen.get_size()
-        tileWidth = size[0] / self.__level.width
-        tileHeight = size[1] / self.__level.height
+        
+    def drawBorder(self, app, pyscreen):
+        borderColor = (255, 255, 255)
 
-        tileWidth = int(tileWidth)
-        tileHeight = int(tileHeight)
+        playRect = self.getPlayRectangle(pyscreen)
 
-        minsize = min(tileWidth, tileHeight)
-
-        tileWidth = minsize
-        tileHeight = minsize
-
-        x = location[0] * tileWidth
-        y = location[1] * tileHeight
-
-        return (x, y, tileWidth, tileHeight)
+        pygame.draw.line(pyscreen, borderColor, playRect.topleft, playRect.topright)
+        pygame.draw.line(pyscreen, borderColor, playRect.topleft, playRect.bottomleft)
+        pygame.draw.line(pyscreen, borderColor, playRect.topright, playRect.bottomright)
+        pygame.draw.line(pyscreen, borderColor, playRect.bottomleft, playRect.bottomright)
 
     def drawPlayer(self, app, pyscreen):
         if not self.__level.isPlayerDead:
@@ -77,3 +70,35 @@ class PyInGameScreenEngine:
         textRect.top += 10
 
         pyscreen.blit(text, textRect)
+
+    def getTileSize(self, pyscreen):
+        size = pyscreen.get_size()
+
+        # padding
+        size = (size[0] - 10, size[1] - 10)
+
+        tileWidth = size[0] / self.__level.width
+        tileHeight = size[1] / self.__level.height
+
+        tileWidth = int(tileWidth)
+        tileHeight = int(tileHeight)
+
+        return min(tileWidth, tileHeight)
+
+    def getPlayRectangle(self, pyscreen):
+        tileSize = self.getTileSize(pyscreen)
+
+        rect = pygame.Rect(0, 0, self.__level.width * tileSize, self.__level.height * tileSize)
+
+        rect.center = pyscreen.get_rect().center
+
+        return rect
+    
+    def getLocationRect(self, app, pyscreen, location):
+        playRect = self.getPlayRectangle(pyscreen)
+        tileSize = self.getTileSize(pyscreen)
+
+        x = (location[0] * tileSize) + playRect.x
+        y = (location[1] * tileSize) + playRect.y
+
+        return (x, y, tileSize, tileSize)
