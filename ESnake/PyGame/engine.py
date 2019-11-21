@@ -39,7 +39,7 @@ class PyGameEngine:
         while app.state == "running":
             self.configureScreenEngine(app)
             self.processEvents(app)
-            self.updateScreenEngine(app)
+            app.level.update(app)
             self.draw(app, pyscreen)
 
             # max fps 60
@@ -80,7 +80,3 @@ class PyGameEngine:
             return PyPostGameScreenEngine()
         else:
             raise Exception("Not Implemented")
-
-    def updateScreenEngine(self, app):
-        app.level.update(app)
-        #self.screenEngine.update(app)
