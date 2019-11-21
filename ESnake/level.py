@@ -8,7 +8,7 @@ class Level:
         self.height = height
         self.score = 0
         self.playerDirection = None
-        self.playerLocation = self.center
+        self.playerLocations = [self.center]
         self.playerSpeed = 10 # Tiles per second
         self.playerLastTimeMoved = 0
         self.foodLocation = self.randomLocation
@@ -45,6 +45,18 @@ class Level:
     def movePlayer(self, app):
         newPlayerLocation = self.playerLocation
 
+        newLocationContents = self.getContents(newPlayerLocation)
+
+        if newLocationContents == "food":
+            self.score += 1
+            self.foodLocation = self.randomEmptyLocation
+        elif newLocationContents == "player":
+            app.screen = AppScreen.PostGame
+            return
+        elif newLocationContents == "wall":
+            app.screen = AppScreen.PostGame 
+            return
+
         if self.playerDirection == None:
             return
         elif self.playerDirection == "left":
@@ -56,17 +68,7 @@ class Level:
         elif self.playerDirection == "down":
             newPlayerLocation = (self.playerLocation[0], self.playerLocation[1] + 1)
 
-        newLocationContents = self.getContents(newPlayerLocation)
-
         self.playerLocation = newPlayerLocation
-
-        if newLocationContents == "food":
-            self.score += 1
-            self.foodLocation = self.randomEmptyLocation
-        elif newLocationContents == "player":
-            app.screen = AppScreen.PostGame
-        elif newLocationContents == "wall":
-            app.screen = AppScreen.PostGame 
      
     def getContents(self, location):
         if location == self.playerLocation:
