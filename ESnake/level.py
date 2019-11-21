@@ -1,5 +1,6 @@
 import random
 from random import randint
+from .appscreen import AppScreen
 
 class Level:
     def __init__(self, width, height):
@@ -44,7 +45,30 @@ class Level:
         elif self.playerDirection == "down":
             newPlayerLocation = (self.playerLocation[0], self.playerLocation[1] + 1)
 
+        newLocationContents = self.getContents(newPlayerLocation)
+
         self.playerLocation = newPlayerLocation
+
+        if newLocationContents == "food":
+            self.score += 1
+        elif newLocationContents == "player":
+            app.screen = AppScreen.PostGame
+        elif newLocationContents == "wall":
+            app.screen = AppScreen.PostGame
+
+    def getContents(self, location):
+        if location == self.playerLocation:
+            return "player"
+        elif location == self.foodLocation:
+            return "food"
+        
+        if location[0] < 0: return "wall"
+        if location[0] > self.width: return "wall"
+
+        if location[1] < 0: return "wall"
+        if location[1] > self.height: return "wall"
+
+        return None
 
     def isEmpty(self, location):
         if location == self.playerLocation:
