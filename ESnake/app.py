@@ -14,9 +14,6 @@ class App:
 
         self.level = Level(100, 100)
 
-        self.components = []
-        self.components.append(self.engine)
-
     def run(self):
         try:
             self.state = "initializing"
@@ -29,8 +26,3 @@ class App:
 
     def stop(self):
         self.state = "stopping"
-
-    def initializeComponents(self):
-        for component in self.components:
-            if hasFunction(component, "init"):
-                component.init(self)
