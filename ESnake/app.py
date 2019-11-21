@@ -20,7 +20,7 @@ class App:
     def run(self):
         try:
             self.state = "initializing"
-            self.initializeComponents()
+            self.engine.init(self)
 
             self.state = "running"
             self.engine.run(self)
@@ -34,10 +34,3 @@ class App:
         for component in self.components:
             if hasFunction(component, "init"):
                 component.init(self)
-
-    def updateComponents(self):
-        for component in self.components:
-            if hasFunction(component, "update"):
-                component.update(self)
-            elif callable(component):
-                component(self)
