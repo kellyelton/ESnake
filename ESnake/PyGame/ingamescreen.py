@@ -24,16 +24,29 @@ class PyInGameScreenEngine:
         self.drawFood(app, pyscreen)
         self.drawPlayer(app, pyscreen)
         self.drawScore(app, pyscreen)
+    
+    def getLocationRect(self, app, pyscreen, location):
+        size = pyscreen.get_size()
+        tileWidth = size[0] / app.level.width
+        tileHeight = size[1] / app.level.height
+
+        tileWidth = int(tileWidth)
+        tileHeight = int(tileHeight)
+
+        minsize = min(tileWidth, tileHeight)
+
+        tileWidth = minsize
+        tileHeight = minsize
+
+        x = location[0] * tileWidth
+        y = location[1] * tileHeight
+
+        return (x, y, tileWidth, tileHeight)
 
     def drawPlayer(self, app, pyscreen):
-        playerLeft = app.level.playerLocation[0] * app.level.tileSize[0]
-        playerTop = app.level.playerLocation[1] * app.level.tileSize[1]
-        playerWidth = app.level.tileSize[0]
-        playerHeight = app.level.tileSize[1]
+        drawLocation = self.getLocationRect(app, pyscreen, app.level.playerLocation)
 
-        drawLocation = (playerLeft, playerTop, playerWidth, playerHeight)
-
-        pygame.draw.rect(pyscreen, app.engine.style.playerColor, drawLocation)
+        pygame.draw.rect(pyscreen, app.engine.style.playerColor, drawLocation, 0)
 
     def drawFood(self, app, pyscreen):
         pass

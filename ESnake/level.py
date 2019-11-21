@@ -1,6 +1,3 @@
-from .tile import Tile
-from .tiletype import TileType
-
 class Level:
     def __init__(self, width, height):
         self.width = width
@@ -8,12 +5,6 @@ class Level:
         self.playerDirection = None
         self.playerLocation = self.center
         self.foodLocation = self.randomLocation
-
-        tiles = []
-        for y in range(self.height):
-            for x in range(self.width):
-                #TODO: Continue here
-                tiles.append()
     
     @property
     def center(self):
