@@ -80,6 +80,10 @@ class PyGameEngine:
 
             return PyInGameScreenEngine(app, level)
         elif app.screen == AppScreen.PostGame:
-            return PyPostGameScreenEngine()
+            previousEngine = self._screenEngine
+
+            level = previousEngine.level
+
+            return PyPostGameScreenEngine(app, level)
         else:
             raise Exception("Not Implemented")

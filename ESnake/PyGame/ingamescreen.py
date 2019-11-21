@@ -6,6 +6,9 @@ class PyInGameScreenEngine:
         self.__scoreFont = pygame.font.Font(app.engine.style.inGameScoreFont, app.engine.style.inGameScoreFontSize)
         self.__level = level
 
+    @property
+    def level(self): return self.__level
+
     def processEvent(self, app, event):
         if event.type == pygame.KEYDOWN:
             canMoveBackwards = len(self.__level.playerLocations) == 1

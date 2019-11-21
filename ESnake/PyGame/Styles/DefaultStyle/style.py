@@ -2,18 +2,29 @@ import os
 
 class ClassicStyle:
     def __init__(self):
-        self.gameBackgroundColor = (0, 0, 0)
         self.loadingBackgroundColor = (50, 0, 0)
-        self.postGameBackgroundColor = (0, 0, 50)
         self.loadingTextColor = (200, 200, 200)
         self.loadingScreenFontSize = 64
         self.loadingScreenFont = self.getResourcePath("Fonts/Amatic-Bold.ttf")
+
+        self.gameBackgroundColor = (0, 0, 0)
         self.inGameScoreTextColor = (200, 200, 200)
         self.inGameScoreFontSize = 32
         self.inGameScoreFont = self.getResourcePath("Fonts/Amatic-Bold.ttf")
         self.playerColor = (255, 255, 255)
         self.playerDeadColor = (200, 20, 150)
         self.foodColor = (50, 255, 50)
+
+        self.postGameBackgroundColor = (50, 0, 0)
+        self.postGameGameOverFont = self.getResourcePath("Fonts/Amatic-Bold.ttf")
+        self.postGameGameOverFontSize = 128
+        self.postGameGameOverColor = (255, 53, 53)
+        self.postGameScoreFont = self.getResourcePath("Fonts/Amatic-Bold.ttf")
+        self.postGameScoreFontSize = 64
+        self.postGameScoreColor = (150, 150, 150)
+        self.postGameInstructionsFont = self.getResourcePath("Fonts/Amatic-Bold.ttf")
+        self.postGameInstructionsFontSize = 32
+        self.postGameInstructionsColor = (255, 128, 26)
 
     def getResourcePath(self, relativePath):
         rootDirectory = os.path.dirname(os.path.abspath(__file__))
