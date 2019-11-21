@@ -1,7 +1,6 @@
 import enum
 from .helpers import *
 from .appscreen import AppScreen
-from .level import Level
 
 class App:
     def __init__(self, engine, config):
@@ -11,9 +10,6 @@ class App:
         self.config = config
         self.engine = engine
         self.score = 0
-
-        self.level = Level(100, 100)
-
     def run(self):
         try:
             self.state = "initializing"

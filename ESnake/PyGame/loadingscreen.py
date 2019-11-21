@@ -8,8 +8,8 @@ class PyLoadingScreenEngine:
         self.__font = pygame.font.Font(app.engine.style.loadingScreenFont, app.engine.style.loadingScreenFontSize)
         self.__lastUpdateDotsTime = 0
 
-    def processEvent(self, app, event):
-        pass
+    def processEvent(self, app, event): pass
+    def update(self, app): pass
 
     def draw(self, app, pyscreen):
         self.__count += 1
