@@ -2,21 +2,25 @@ import pygame
 from ..appscreen import AppScreen
 
 class PyInGameScreenEngine:
-    def __init__(self, app):
+    def __init__(self, app, level):
         self.__scoreFont = pygame.font.Font(app.engine.style.inGameScoreFont, app.engine.style.inGameScoreFontSize)
+        self.__level = level
 
     def processEvent(self, app, event):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
-                app.level.playerDirection = "left"
+                self.__level.playerDirection = "left"
             elif event.key == pygame.K_RIGHT:
-                app.level.playerDirection = "right"
+                self.__level.playerDirection = "right"
             elif event.key == pygame.K_UP:
-                app.level.playerDirection = "up"
+                self.__level.playerDirection = "up"
             elif event.key == pygame.K_DOWN:
-                app.level.playerDirection = "down"
+                self.__level.playerDirection = "down"
             elif event.key == pygame.K_ESCAPE:
                 app.screen = AppScreen.PostGame
+    
+    def update(self, app):
+        self.__level.update(app)
 
     def draw(self, app, pyscreen):
         pyscreen.fill(app.engine.style.gameBackgroundColor)
@@ -27,8 +31,8 @@ class PyInGameScreenEngine:
     
     def getLocationRect(self, app, pyscreen, location):
         size = pyscreen.get_size()
-        tileWidth = size[0] / app.level.width
-        tileHeight = size[1] / app.level.height
+        tileWidth = size[0] / self.__level.width
+        tileHeight = size[1] / self.__level.height
 
         tileWidth = int(tileWidth)
         tileHeight = int(tileHeight)
@@ -44,7 +48,7 @@ class PyInGameScreenEngine:
         return (x, y, tileWidth, tileHeight)
 
     def drawPlayer(self, app, pyscreen):
-        drawLocation = self.getLocationRect(app, pyscreen, app.level.playerLocation)
+        drawLocation = self.getLocationRect(app, pyscreen, self.__level.playerLocation)
 
         pygame.draw.rect(pyscreen, app.engine.style.playerColor, drawLocation, 0)
 

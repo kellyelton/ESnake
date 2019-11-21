@@ -1,6 +1,7 @@
 import pygame
 from ..helpers import *
 from ..appscreen import AppScreen
+from ..level import Level
 from .loadingscreen import PyLoadingScreenEngine
 from .ingamescreen import PyInGameScreenEngine
 from .postgamescreen import PyPostGameScreenEngine
@@ -39,7 +40,7 @@ class PyGameEngine:
         while app.state == "running":
             self.configureScreenEngine(app)
             self.processEvents(app)
-            app.level.update(app)
+            self.screenEngine.update(app)
             self.draw(app, pyscreen)
 
             # max fps 60
@@ -75,7 +76,9 @@ class PyGameEngine:
         if app.screen == AppScreen.Loading:
             return PyLoadingScreenEngine(app)
         elif app.screen == AppScreen.InGame:
-            return PyInGameScreenEngine(app)
+            level = Level(100, 100)
+
+            return PyInGameScreenEngine(app, level)
         elif app.screen == AppScreen.PostGame:
             return PyPostGameScreenEngine()
         else:
