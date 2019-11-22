@@ -19,7 +19,7 @@ class Level:
         self.playerLastTimeMoved = 0
         self.playerDeathTime = 0
         self.isPlayerDead = False
-        self.foodLocation = self.randomLocation
+        self.foodLocation = self.randomEmptyLocation
     
     @property
     def center(self):
