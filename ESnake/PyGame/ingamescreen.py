@@ -1,13 +1,15 @@
 import pygame
 from ..appscreen import AppScreen
 from ..direction import Direction
+from ..level import Level
+from ..app import App
 
 class PyInGameScreenEngine:
-    def __init__(self, app, level):
+    def __init__(self, app: App, level: Level):
         self.__debugFont = pygame.font.SysFont("Lucida Console", 14)
         self.__scoreFont = pygame.font.Font(app.engine.style.inGameScoreFont, app.engine.style.inGameScoreFontSize)
         #TODO: Make this self.level
-        self.__level = level
+        self.__level: Level = level
 
     @property
     def level(self): return self.__level
@@ -56,6 +58,14 @@ class PyInGameScreenEngine:
         pygame.draw.rect(pyscreen, borderColor, bottomRect, 0)
 
     def drawPlayer(self, app, pyscreen):
+        # TODO: use these lines to work on smoothly moving the snake
+        now = pygame.time.get_ticks()
+        timeSincePlayerMoved = now - self.__level.playerLastTimeMoved
+        pixelsPerTile = self.getTileSize(pyscreen)
+        tilesPerMillisecond = self.__level.playerSpeed / 1000
+        pixelsPerMilliscond = tilesPerMillisecond * pixelsPerTile
+        offset = timeSincePlayerMoved * pixelsPerMilliscond
+
         playerSegmentCount = len(self.__level.playerLocations)
         for index, playerLocation in enumerate(reversed(self.__level.playerLocations)):
             isFirstSection = index == playerSegmentCount - 1
