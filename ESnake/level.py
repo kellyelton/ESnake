@@ -1,6 +1,7 @@
 import random
 from random import randint
 from .appscreen import AppScreen
+from .direction import Direction
 
 class Level:
     @staticmethod
@@ -14,8 +15,8 @@ class Level:
 
         #TODO: abstract the player into its own class
         self.score = 0
-        self.playerDirection = None
-        self.requestedPlayerDirection = None
+        self.playerDirection: Direction = None
+        self.requestedPlayerDirection: Direction = None
         self.playerLocations = [self.center]
         self.playerLastTimeMoved = 0
         self.playerDeathTime = 0
@@ -63,16 +64,10 @@ class Level:
         self.requestedPlayerDirection = None
 
         if newDirection != None and self.playerDirection != newDirection:
+            # Don't allow reversing if we have a tail
             if len(self.playerLocations) > 1:
-                # Only limit reversing if we have more than one segment
-                if self.playerDirection == "left" and newDirection == "right":
-                    newDirection = self.playerDirection
-                elif self.playerDirection == "right" and newDirection == "left":
-                    newDirection = self.playerDirection
-                elif self.playerDirection == "up" and newDirection == "down":
-                    newDirection = self.playerDirection
-                elif self.playerDirection == "down" and newDirection == "up":
-                    newDirection = self.playerDirection
+                if self.playerDirection.opposite == newDirection:
+                    newDirection = self.playerDirection # cancel out change
 
             self.playerDirection = newDirection
 
@@ -82,13 +77,13 @@ class Level:
         newLocation = oldLocation
         removeTail = True
 
-        if self.playerDirection == "left":
+        if self.playerDirection == Direction.left:
             newLocation = (oldLocation[0] - 1, oldLocation[1])
-        elif self.playerDirection == "right":
+        elif self.playerDirection == Direction.right:
             newLocation = (oldLocation[0] + 1, oldLocation[1])
-        elif self.playerDirection == "up":
+        elif self.playerDirection == Direction.up:
             newLocation = (oldLocation[0], oldLocation[1] - 1)
-        elif self.playerDirection == "down":
+        elif self.playerDirection == Direction.down:
             newLocation = (oldLocation[0], oldLocation[1] + 1)
 
         newLocationContents = self.getContents(newLocation)

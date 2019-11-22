@@ -1,5 +1,6 @@
 import pygame
 from ..appscreen import AppScreen
+from ..direction import Direction
 
 class PyInGameScreenEngine:
     def __init__(self, app, level):
@@ -14,13 +15,13 @@ class PyInGameScreenEngine:
     def processEvent(self, app, event):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
-                self.__level.requestedPlayerDirection = "left"
+                self.__level.requestedPlayerDirection = Direction.left
             elif event.key == pygame.K_RIGHT:
-                self.__level.requestedPlayerDirection = "right"
+                self.__level.requestedPlayerDirection = Direction.right
             elif event.key == pygame.K_UP:
-                self.__level.requestedPlayerDirection = "up"
+                self.__level.requestedPlayerDirection = Direction.up
             elif event.key == pygame.K_DOWN:
-                self.__level.requestedPlayerDirection = "down"
+                self.__level.requestedPlayerDirection = Direction.down
             elif event.key == pygame.K_ESCAPE:
                 app.screen = AppScreen.PostGame
     
