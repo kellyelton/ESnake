@@ -3,13 +3,18 @@ from random import randint
 from .appscreen import AppScreen
 
 class Level:
-    def __init__(self, width, height):
+    @staticmethod
+    def default():
+        return Level(15, 15, 5)
+
+    def __init__(self, width, height, speed):
         self.width = width
         self.height = height
+        self.playerSpeed = speed #tiles per second
+
         self.score = 0
         self.playerDirection = None
         self.playerLocations = [self.center]
-        self.playerSpeed = 15 # Tiles per second
         self.playerLastTimeMoved = 0
         self.playerDeathTime = 0
         self.isPlayerDead = False

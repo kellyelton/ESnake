@@ -76,7 +76,7 @@ class PyGameEngine:
         if app.screen == AppScreen.Loading:
             return PyLoadingScreenEngine(app)
         elif app.screen == AppScreen.InGame:
-            level = Level(100, 100)
+            level = Level.default()
 
             return PyInGameScreenEngine(app, level)
         elif app.screen == AppScreen.PostGame:
