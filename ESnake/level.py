@@ -12,6 +12,7 @@ class Level:
         self.height = height
         self.playerSpeed = speed #tiles per second
 
+        #TODO: abstract the player into its own class
         self.score = 0
         self.playerDirection = None
         self.requestedPlayerDirection = None

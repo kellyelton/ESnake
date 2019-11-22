@@ -5,6 +5,7 @@ class PyInGameScreenEngine:
     def __init__(self, app, level):
         self.__debugFont = pygame.font.SysFont("Lucida Console", 14)
         self.__scoreFont = pygame.font.Font(app.engine.style.inGameScoreFont, app.engine.style.inGameScoreFontSize)
+        #TODO: Make this self.level
         self.__level = level
 
     @property
@@ -12,8 +13,6 @@ class PyInGameScreenEngine:
 
     def processEvent(self, app, event):
         if event.type == pygame.KEYDOWN:
-            canMoveBackwards = len(self.__level.playerLocations) == 1
-
             if event.key == pygame.K_LEFT:
                 self.__level.requestedPlayerDirection = "left"
             elif event.key == pygame.K_RIGHT:
