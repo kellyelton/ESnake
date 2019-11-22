@@ -56,8 +56,10 @@ class PyInGameScreenEngine:
         pygame.draw.rect(pyscreen, borderColor, bottomRect, 0)
 
     def drawPlayer(self, app, pyscreen):
-        isFirstSection = True
-        for playerLocation in self.__level.playerLocations:
+        playerSegmentCount = len(self.__level.playerLocations)
+        for index, playerLocation in enumerate(reversed(self.__level.playerLocations)):
+            isFirstSection = index == playerSegmentCount - 1
+
             drawLocation = self.getLocationRect(app, pyscreen, playerLocation)
 
             if isFirstSection and self.__level.isPlayerDead:
