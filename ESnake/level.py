@@ -26,8 +26,8 @@ class Level:
 
     @property
     def randomLocation(self):
-        x = randint(0, self.width)
-        y = randint(0, self.height)
+        x = randint(0, self.width - 1)
+        y = randint(0, self.height - 1)
 
         return (x, y)
     
