@@ -113,4 +113,9 @@ class Level:
             if location == playerLocation:
                 return False
 
+        if location.x <= 0 or location.x >= self.width - 1:
+            return False
+        if location.y <= 0 or location.y >= self.height - 1:
+            return False 
+
         return True
