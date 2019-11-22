@@ -14,6 +14,7 @@ class Level:
 
         self.score = 0
         self.playerDirection = None
+        self.requestedPlayerDirection = None
         self.playerLocations = [self.center]
         self.playerLastTimeMoved = 0
         self.playerDeathTime = 0
@@ -56,6 +57,23 @@ class Level:
                 app.screen = AppScreen.PostGame
 
     def movePlayer(self, app, time):
+        newDirection = self.requestedPlayerDirection
+        self.requestedPlayerDirection = None
+
+        if newDirection != None and self.playerDirection != newDirection:
+            if len(self.playerLocations) > 1:
+                # Only limit reversing if we have more than one segment
+                if self.playerDirection == "left" and newDirection == "right":
+                    newDirection = self.playerDirection
+                elif self.playerDirection == "right" and newDirection == "left":
+                    newDirection = self.playerDirection
+                elif self.playerDirection == "up" and newDirection == "down":
+                    newDirection = self.playerDirection
+                elif self.playerDirection == "down" and newDirection == "up":
+                    newDirection = self.playerDirection
+
+            self.playerDirection = newDirection
+
         if self.playerDirection == None: return
 
         oldLocation = self.playerLocations[0]

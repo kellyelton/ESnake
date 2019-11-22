@@ -15,17 +15,13 @@ class PyInGameScreenEngine:
             canMoveBackwards = len(self.__level.playerLocations) == 1
 
             if event.key == pygame.K_LEFT:
-                if canMoveBackwards or self.__level.playerDirection != "right":
-                    self.__level.playerDirection = "left"
+                self.__level.requestedPlayerDirection = "left"
             elif event.key == pygame.K_RIGHT:
-                if canMoveBackwards or self.__level.playerDirection != "left":
-                    self.__level.playerDirection = "right"
+                self.__level.requestedPlayerDirection = "right"
             elif event.key == pygame.K_UP:
-                if canMoveBackwards or self.__level.playerDirection != "down":
-                    self.__level.playerDirection = "up"
+                self.__level.requestedPlayerDirection = "up"
             elif event.key == pygame.K_DOWN:
-                if canMoveBackwards or self.__level.playerDirection != "up":
-                    self.__level.playerDirection = "down"
+                self.__level.requestedPlayerDirection = "down"
             elif event.key == pygame.K_ESCAPE:
                 app.screen = AppScreen.PostGame
     
