@@ -19,6 +19,7 @@ class Level:
         self.playerLastTimeMoved = 0
         self.playerDeathTime = 0
         self.isPlayerDead = False
+        self.foodLocation = None # Needs to exist before we set it to random
         self.foodLocation = self.randomEmptyLocation
     
     @property
