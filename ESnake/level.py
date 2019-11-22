@@ -92,11 +92,11 @@ class Level:
             if location == playerLocation:
                 return "player"
         
-        if location[0] < 0: return "wall"
-        if location[0] > self.width: return "wall"
+        if location[0] <= 0: return "wall"
+        if location[0] >= self.width - 1: return "wall"
 
-        if location[1] < 0: return "wall"
-        if location[1] > self.height: return "wall"
+        if location[1] <= 0: return "wall"
+        if location[1] >= self.height - 1: return "wall"
 
         return None
 
