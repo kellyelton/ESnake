@@ -22,7 +22,7 @@ class Level:
     
     @property
     def center(self):
-        return (self.width / 2, self.height / 2)
+        return (self.width // 2, self.height // 2)
 
     @property
     def randomLocation(self):
