@@ -11,6 +11,8 @@ class PyInGameScreenEngine:
         self.__statsFont = pygame.font.Font(app.engine.style.inGameStatsFont, app.engine.style.inGameStatsFontSize)
         #TODO: Make this self.level
         self.__level: Level = level
+        self.__playerDeadSections: int = 0
+        self.__lastDeadSectionAdded: int = 0
 
     @property
     def level(self): return self.__level
@@ -68,6 +70,12 @@ class PyInGameScreenEngine:
         pixelsPerMilliscond = tilesPerMillisecond * pixelsPerTile
         offset = timeSincePlayerMoved * pixelsPerMilliscond
 
+        if self.__level.isPlayerDead:
+            timeSinceLastDeadSegment = now - self.__lastDeadSectionAdded
+            if timeSinceLastDeadSegment >= 100:
+                self.__lastDeadSectionAdded = now
+                self.__playerDeadSections += 1
+
         playerSegmentCount = len(self.__level.playerLocations)
         for index, playerLocation in enumerate(reversed(self.__level.playerLocations)):
             isFirstSection = index == playerSegmentCount - 1
@@ -77,8 +85,9 @@ class PyInGameScreenEngine:
             outlineColor = (0, 0, 0)
             fillColor = app.engine.style.playerColor
 
-            if isFirstSection and self.__level.isPlayerDead:
-                fillColor = app.engine.style.playerDeadColor
+            if self.__level.isPlayerDead:
+                if index >= playerSegmentCount - self.__playerDeadSections:
+                    fillColor = app.engine.style.playerDeadColor
 
             drawLocation = self.getLocationRect(app, pyscreen, playerLocation)
 
