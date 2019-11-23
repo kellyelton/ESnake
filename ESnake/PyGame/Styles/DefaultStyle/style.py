@@ -15,7 +15,7 @@ class ClassicStyle:
         self.inGameStatsFontSize = 20
         self.inGameStatsFont = self.getResourcePath("Fonts/AmaticSC-Regular.ttf")
         self.playerColor = (255, 255, 255)
-        self.playerDeadColor = (200, 20, 150)
+        self.playerDeadColor = (138, 3, 3)
         self.foodColor = (50, 255, 50)
 
         self.postGameBackgroundColor = (50, 0, 0)
