@@ -1,5 +1,6 @@
 import pygame
 from ..appscreen import AppScreen
+from ..highscore import *
 
 class PyPostGameScreenEngine:
     def update(self, app): pass
@@ -39,12 +40,24 @@ class PyPostGameScreenEngine:
         else:
             scoreString = "Score: " + str(self.__level.score)
 
+        highScore = getHighScore(app.config)
+
         scoreText = self.__scoreFont.render(scoreString, True, app.engine.style.postGameScoreColor)
 
         scoreTextRect = scoreText.get_rect()
         scoreTextRect.center = pyscreen.get_rect().center
 
         pyscreen.blit(scoreText, scoreTextRect)
+
+        scoreString = "High Score: " + str(highScore)
+
+        highScoreText = self.__scoreFont.render(scoreString, True, app.engine.style.postGameScoreColor)
+
+        highScoreTextRect = highScoreText.get_rect()
+        highScoreTextRect .center = pyscreen.get_rect().center
+        highScoreTextRect .y = 20 + scoreTextRect.bottom
+
+        pyscreen.blit(highScoreText, highScoreTextRect)
 
     def drawInstructionsText(self, app, pyscreen):
         instructionsText = self.__instructionsFont.render("Press [Enter] to Play Again, or [Esc] to Quit", True, app.engine.style.postGameInstructionsColor)
