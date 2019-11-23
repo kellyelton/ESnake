@@ -23,13 +23,20 @@ def updateHighScore(config, newHighScore: int) -> bool:
     finally:
         fileStream.close()
 
-def getHighScore(config, path: str) -> int:
-    fileStream = open(config.highScorePath, "w+")
+def getHighScore(config) -> int:
+    highScore: int = 0
 
+    fileStream = open(config.highScorePath, "r+")
     try:
-        highScoreString = fileStream.read().strip()
-        highScore = int(highScoreString)
 
-        return highScore
+        try:
+            highScoreString = fileStream.read()
+            highScoreString = highScoreString.strip()
+            highScore = int(highScoreString)
+        except ValueError:
+            #TODO if highScoreString is empty, that's fine. Otherwise log the error because that means the file is bad.
+            highScore = 0
     finally:
         fileStream.close()
+
+    return highScore
