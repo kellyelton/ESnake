@@ -31,7 +31,10 @@ class PyGameEngine:
     def run(self, app):
         print("engine run")
 
-        pyscreen = pygame.display.set_mode(app.config.screenSize)
+        if app.config.fullscreen:
+            pyscreen = pygame.display.set_mode(app.config.screenSize, pygame.FULLSCREEN)
+        else:
+            pyscreen = pygame.display.set_mode(app.config.screenSize)
 
         pygame.display.set_caption(app.name)
 
