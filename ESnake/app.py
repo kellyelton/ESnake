@@ -11,6 +11,7 @@ class App:
         self.config = config
         self.engine = engine
         self.debug = Debug()
+
     def run(self):
         try:
             self.state = "initializing"
