@@ -71,6 +71,13 @@ class PyInGameScreenEngine:
         offset = timeSincePlayerMoved * pixelsPerMilliscond
 
         if self.__level.isPlayerDead:
+            text = self.__scoreFont.render("RIP", True, app.engine.style.playerDeadColor)
+
+            textRect = text.get_rect()
+            textRect.center = pyscreen.get_rect().center
+
+            pyscreen.blit(text, textRect)
+
             timeSinceLastDeadSegment = now - self.__lastDeadSectionAdded
             if timeSinceLastDeadSegment >= 100:
                 self.__lastDeadSectionAdded = now
@@ -78,11 +85,6 @@ class PyInGameScreenEngine:
 
         playerSegmentCount = len(self.__level.playerLocations)
         for index, playerLocation in enumerate(reversed(self.__level.playerLocations)):
-            isFirstSection = index == playerSegmentCount - 1
-            isLastSection = index = 0
-            isMidSection = not isFirstSection and not isLastSection
-
-            outlineColor = (0, 0, 0)
             fillColor = app.engine.style.playerColor
 
             if self.__level.isPlayerDead:
