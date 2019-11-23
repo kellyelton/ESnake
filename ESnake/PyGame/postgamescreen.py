@@ -34,7 +34,11 @@ class PyPostGameScreenEngine:
         pyscreen.blit(gameOverText, gameOverTextRect)
 
     def drawScoreText(self, app, pyscreen):
-        scoreString = "Score: " + str(self.__level.score)
+        if self.__level.isHighScore:
+            scoreString = "New High Score: " + str(self.__level.score)
+        else:
+            scoreString = "Score: " + str(self.__level.score)
+
         scoreText = self.__scoreFont.render(scoreString, True, app.engine.style.postGameScoreColor)
 
         scoreTextRect = scoreText.get_rect()

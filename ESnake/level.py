@@ -2,6 +2,7 @@ import random
 from random import randint
 from .appscreen import AppScreen
 from .direction import Direction
+from .highscore import *
 
 class Level:
     @staticmethod
@@ -16,6 +17,7 @@ class Level:
 
         #TODO: abstract the player into its own class
         self.score = 0
+        self.isHighScore = False
         self.playerDirection: Direction = None
         self.requestedPlayerDirection: Direction = None
         self.playerLocations = [self.center]
@@ -67,6 +69,9 @@ class Level:
 
             if msSincePlayerDied >= 3000:
                 app.screen = AppScreen.PostGame
+                storedHighScore = updateHighScore(app.config, self.score)
+                if storedHighScore:
+                    self.isHighScore = True
 
     def movePlayer(self, app, time):
         newDirection = self.requestedPlayerDirection
