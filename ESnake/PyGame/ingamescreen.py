@@ -62,14 +62,6 @@ class PyInGameScreenEngine:
         pygame.draw.rect(pyscreen, borderColor, bottomRect, 0)
 
     def drawPlayer(self, app, pyscreen):
-        # TODO: use these lines to work on smoothly moving the snake
-        now = pygame.time.get_ticks()
-        timeSincePlayerMoved = now - self.__level.playerLastTimeMoved
-        pixelsPerTile = self.getTileSize(pyscreen)
-        tilesPerMillisecond = self.__level.playerSpeed / 1000
-        pixelsPerMilliscond = tilesPerMillisecond * pixelsPerTile
-        offset = timeSincePlayerMoved * pixelsPerMilliscond
-
         if self.__level.isPlayerDead:
             text = self.__scoreFont.render("RIP", True, app.engine.style.playerDeadColor)
 
