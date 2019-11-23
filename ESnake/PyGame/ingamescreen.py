@@ -71,15 +71,18 @@ class PyInGameScreenEngine:
         playerSegmentCount = len(self.__level.playerLocations)
         for index, playerLocation in enumerate(reversed(self.__level.playerLocations)):
             isFirstSection = index == playerSegmentCount - 1
+            isLastSection = index = 0
+            isMidSection = not isFirstSection and not isLastSection
+
+            outlineColor = (0, 0, 0)
+            fillColor = app.engine.style.playerColor
+
+            if isFirstSection and self.__level.isPlayerDead:
+                fillColor = app.engine.style.playerDeadColor
 
             drawLocation = self.getLocationRect(app, pyscreen, playerLocation)
 
-            if isFirstSection and self.__level.isPlayerDead:
-                pygame.draw.rect(pyscreen, app.engine.style.playerDeadColor, drawLocation, 0)
-            else:
-                pygame.draw.rect(pyscreen, app.engine.style.playerColor, drawLocation, 0)
-
-            isFirstSection = False
+            pygame.draw.rect(pyscreen, fillColor, drawLocation, 0)
 
             if app.debug.playerLocation:
                 string = f"{playerLocation[0]}, {playerLocation[1]}"
