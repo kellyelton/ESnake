@@ -8,6 +8,7 @@ class PyInGameScreenEngine:
     def __init__(self, app: App, level: Level):
         self.__debugFont = pygame.font.SysFont("Lucida Console", 14)
         self.__scoreFont = pygame.font.Font(app.engine.style.inGameScoreFont, app.engine.style.inGameScoreFontSize)
+        self.__statsFont = pygame.font.Font(app.engine.style.inGameStatsFont, app.engine.style.inGameStatsFontSize)
         #TODO: Make this self.level
         self.__level: Level = level
 
@@ -39,6 +40,7 @@ class PyInGameScreenEngine:
         self.drawFood(app, pyscreen)
         self.drawPlayer(app, pyscreen)
         self.drawScore(app, pyscreen)
+        self.drawStats(app, pyscreen)
         
     def drawBorder(self, app, pyscreen):
         borderColor = (255, 255, 255)
@@ -101,6 +103,18 @@ class PyInGameScreenEngine:
 
         textRect.left -= 10
         textRect.top += 10
+
+        pyscreen.blit(text, textRect)
+
+    def drawStats(self, app, pyscreen):
+        string = f"{self.__level.playerSpeed} + {self.__level.playerSpeedBoost:0.2f} t/s"
+        text = self.__statsFont.render(string, True, app.engine.style.inGameStatsTextColor)
+
+        textRect = text.get_rect()
+        textRect.topright = pyscreen.get_rect().topright
+
+        textRect.left -= 10
+        textRect.top += 100
 
         pyscreen.blit(text, textRect)
 

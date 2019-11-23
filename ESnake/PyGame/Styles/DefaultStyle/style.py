@@ -8,9 +8,12 @@ class ClassicStyle:
         self.loadingScreenFont = self.getResourcePath("Fonts/Amatic-Bold.ttf")
 
         self.gameBackgroundColor = (0, 0, 0)
-        self.inGameScoreTextColor = (200, 200, 200)
-        self.inGameScoreFontSize = 32
-        self.inGameScoreFont = self.getResourcePath("Fonts/Amatic-Bold.ttf")
+        self.inGameScoreTextColor = (255, 255, 255)
+        self.inGameScoreFontSize = 64
+        self.inGameScoreFont = self.getResourcePath("Fonts/AmaticSC-Regular.ttf")
+        self.inGameStatsTextColor = (150, 255, 150)
+        self.inGameStatsFontSize = 20
+        self.inGameStatsFont = self.getResourcePath("Fonts/AmaticSC-Regular.ttf")
         self.playerColor = (255, 255, 255)
         self.playerDeadColor = (200, 20, 150)
         self.foodColor = (50, 255, 50)

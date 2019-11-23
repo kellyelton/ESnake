@@ -6,12 +6,13 @@ from .direction import Direction
 class Level:
     @staticmethod
     def default():
-        return Level(15, 15, 5)
+        return Level(40, 40, 8)
 
     def __init__(self, width, height, speed):
         self.width = width
         self.height = height
         self.playerSpeed = speed #tiles per second
+        self.playerSpeedBoost = 0
 
         #TODO: abstract the player into its own class
         self.score = 0
@@ -23,6 +24,7 @@ class Level:
         self.isPlayerDead = False
         self.foodLocation = None # Needs to exist before we set it to random
         self.foodLocation = self.randomEmptyLocation
+        self.startTime: int = None
     
     @property
     def center(self):
@@ -46,7 +48,14 @@ class Level:
     
     def update(self, app, time):
         if not self.isPlayerDead:
-            minDelay = 1000 / self.playerSpeed
+            if self.startTime == None:
+                self.startTime = time
+
+            runSeconds = (time - self.startTime) / 1000
+            self.playerSpeedBoost = runSeconds / 12
+            adjustedSpeed = self.playerSpeed + self.playerSpeedBoost
+
+            minDelay = 1000 / adjustedSpeed
 
             msSincePlayerLastMoved = time - self.playerLastTimeMoved
 
