@@ -78,11 +78,19 @@ class PyInGameScreenEngine:
 
         playerSegmentCount = len(self.__level.playerLocations)
         for index, playerLocation in enumerate(reversed(self.__level.playerLocations)):
-            fillColor = app.engine.style.playerColor
+            isHeadSection = index == playerSegmentCount - 1
+
+            fillColor = None
 
             if self.__level.isPlayerDead:
                 if index >= playerSegmentCount - self.__playerDeadSections:
                     fillColor = app.engine.style.playerDeadColor
+                else:
+                    fillColor = app.engine.style.playerBodyColor
+            elif isHeadSection:
+                fillColor = app.engine.style.playerHeadColor
+            else:
+                fillColor = app.engine.style.playerBodyColor
 
             drawLocation = self.getLocationRect(app, pyscreen, playerLocation)
 
