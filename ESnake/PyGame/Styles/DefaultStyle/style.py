@@ -17,7 +17,7 @@ class ClassicStyle:
         self.playerHeadColor = (145, 203, 255)
         self.playerBodyColor = (255, 255, 255)
         self.playerDeadColor = (138, 3, 3)
-        self.foodColor = (50, 255, 50)
+        self.foodColor = (183, 255, 112)
 
         self.postGameBackgroundColor = (50, 0, 0)
         self.postGameGameOverFont = self.getResourcePath("Fonts/Amatic-Bold.ttf")
