@@ -36,13 +36,14 @@ class PyInGameScreenEngine:
         self.__level.update(app, now)
 
     def draw(self, app, pyscreen):
+        now = pygame.time.get_ticks()
+
         pyscreen.fill(app.engine.style.gameBackgroundColor)
 
         self.drawBorder(app, pyscreen)
         self.drawFood(app, pyscreen)
-        self.drawPlayer(app, pyscreen)
+        self.drawPlayer(app, pyscreen, now)
         self.drawScore(app, pyscreen)
-        self.drawStats(app, pyscreen)
         
     def drawBorder(self, app, pyscreen):
         borderColor = (255, 255, 255)
@@ -61,7 +62,7 @@ class PyInGameScreenEngine:
         pygame.draw.rect(pyscreen, borderColor, rightRect, 0)
         pygame.draw.rect(pyscreen, borderColor, bottomRect, 0)
 
-    def drawPlayer(self, app, pyscreen):
+    def drawPlayer(self, app, pyscreen, now):
         if self.__level.isPlayerDead:
             text = self.__scoreFont.render("RIP", True, app.engine.style.playerDeadColor)
 
@@ -102,25 +103,30 @@ class PyInGameScreenEngine:
         pygame.draw.rect(pyscreen, app.engine.style.foodColor, drawLocation, 0)
 
     def drawScore(self, app, pyscreen):
+        text = self.__scoreFont.render(str("Score"), True, app.engine.style.inGameScoreTextColor)
+
+        labelTextRect = text.get_rect()
+        labelTextRect.topright = pyscreen.get_rect().topright
+
+        labelTextRect.left -= 5
+        labelTextRect.top += 5
+
+        pyscreen.blit(text,labelTextRect)
+
         text = self.__scoreFont.render(str(self.__level.score), True, app.engine.style.inGameScoreTextColor)
 
-        textRect = text.get_rect()
-        textRect.topright = pyscreen.get_rect().topright
+        scoreTextRect = text.get_rect()
+        scoreTextRect .topright = labelTextRect.bottomright
 
-        textRect.left -= 10
-        textRect.top += 10
+        pyscreen.blit(text, scoreTextRect)
 
-        pyscreen.blit(text, textRect)
-
-    def drawStats(self, app, pyscreen):
         string = f"{self.__level.playerSpeed} + {self.__level.playerSpeedBoost:0.2f} t/s"
         text = self.__statsFont.render(string, True, app.engine.style.inGameStatsTextColor)
 
         textRect = text.get_rect()
-        textRect.topright = pyscreen.get_rect().topright
+        textRect.topright = scoreTextRect.bottomright
 
-        textRect.left -= 10
-        textRect.top += 100
+        textRect .top += 5
 
         pyscreen.blit(text, textRect)
 
