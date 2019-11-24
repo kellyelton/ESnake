@@ -92,10 +92,10 @@ class PyInGameScreenEngine:
             else:
                 fillColor = app.engine.style.playerBodyColor
 
-            drawLocation = self.getLocationRect(app, pyscreen, playerLocation)
+            drawLocation = pygame.Rect(self.getLocationRect(app, pyscreen, playerLocation))
 
             if not isHeadSection:
-                drawLocation = (drawLocation[0] + 1, drawLocation[1] + 1, drawLocation[2] - 2, drawLocation[3] - 2)
+                drawLocation.inflate_ip(-2, -2)
 
             pygame.draw.rect(pyscreen, fillColor, drawLocation, 0)
 
