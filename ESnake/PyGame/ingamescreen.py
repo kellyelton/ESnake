@@ -76,8 +76,12 @@ class PyInGameScreenEngine:
                 self.__lastDeadSectionAdded = now
                 self.__playerDeadSections += 1
 
+        timeSinceLastAte = now - self.__level.playerLastTimeAte
+
         playerSegmentCount = len(self.__level.playerLocations)
         for index, playerLocation in enumerate(reversed(self.__level.playerLocations)):
+            realIndex = (playerSegmentCount - index - 1)
+
             isHeadSection = index == playerSegmentCount - 1
 
             fillColor = None
@@ -96,6 +100,39 @@ class PyInGameScreenEngine:
 
             if not isHeadSection:
                 drawLocation.inflate_ip(-2, -2)
+
+            if realIndex == 0:
+                animationSegment1RunTime = 100
+                animationSegment2RunTime = 100
+
+                animationRunTime = animationSegment1RunTime + animationSegment2RunTime
+
+                animationStartTime = self.__level.playerLastTimeAte
+                animationEndTime = animationStartTime + animationRunTime
+
+                if now >= animationStartTime and now <= animationEndTime:
+                    animationSegment1StartTime = animationStartTime
+                    animationSegment2StartTime = animationSegment1StartTime + animationSegment1RunTime
+
+                    increase = 0
+
+                    if now >= animationSegment1StartTime and now < animationSegment2StartTime:
+                        # Animation Section 1
+                        increaseRatio = 3 / animationSegment1RunTime
+                        increase = (now - animationStartTime) * increaseRatio
+                    elif now >= animationSegment2StartTime and now < animationEndTime:
+                        # Animation Section 2
+                        increaseRatio = 2.5 / animationSegment2RunTime
+                        increase = (animationStartTime - now) * increaseRatio
+
+                    drawLocation.inflate_ip(increase, increase)
+
+            if self.__level.isPlayerDead:
+                timeSinceDead = now - self.__level.playerDeathTime
+                increaseRatio = 4 / 200
+                increase = timeSinceDead * increaseRatio
+
+                drawLocation.inflate_ip(increase, increase)
 
             pygame.draw.rect(pyscreen, fillColor, drawLocation, 0)
 
