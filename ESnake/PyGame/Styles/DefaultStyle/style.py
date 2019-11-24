@@ -2,22 +2,26 @@ import os
 
 class ClassicStyle:
     def __init__(self):
+        mainBorderColor = (52, 10, 63)
+
         self.loadingBackgroundColor = (50, 0, 0)
         self.loadingTextColor = (200, 200, 200)
         self.loadingScreenFontSize = 64
         self.loadingScreenFont = self.getResourcePath("Fonts/Amatic-Bold.ttf")
 
         self.gameBackgroundColor = (0, 0, 0)
+        self.inGameWallColor = mainBorderColor
         self.inGameScoreTextColor = (255, 255, 255)
         self.inGameScoreFontSize = 40
         self.inGameScoreFont = self.getResourcePath("Fonts/Alata-Regular.ttf")
-        self.inGameStatsTextColor = (150, 255, 150)
+        self.inGameScoreHeaderBackgroundColor = mainBorderColor
+        self.inGameStatsTextColor = (75, 75, 75)
         self.inGameStatsFontSize = 15
         self.inGameStatsFont = self.getResourcePath("Fonts/Alata-Regular.ttf")
-        self.playerHeadColor = (145, 203, 255)
-        self.playerBodyColor = (255, 255, 255)
+        self.playerHeadColor = (108, 28, 206)
+        self.playerBodyColor = (49, 13, 99)
         self.playerDeadColor = (138, 3, 3)
-        self.foodColor = (183, 255, 112)
+        self.foodColor = (150, 150, 150)
 
         self.postGameBackgroundColor = (50, 0, 0)
         self.postGameGameOverFont = self.getResourcePath("Fonts/Amatic-Bold.ttf")

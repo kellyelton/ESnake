@@ -46,7 +46,7 @@ class PyInGameScreenEngine:
         self.drawScore(app, pyscreen)
         
     def drawBorder(self, app, pyscreen):
-        borderColor = (255, 255, 255)
+        borderColor = app.engine.style.inGameWallColor
 
         tileSize = self.getTileSize(pyscreen)
 
@@ -94,6 +94,9 @@ class PyInGameScreenEngine:
 
             drawLocation = self.getLocationRect(app, pyscreen, playerLocation)
 
+            if not isHeadSection:
+                drawLocation = (drawLocation[0] + 1, drawLocation[1] + 1, drawLocation[2] - 2, drawLocation[3] - 2)
+
             pygame.draw.rect(pyscreen, fillColor, drawLocation, 0)
 
             if app.debug.playerLocation:
@@ -108,33 +111,44 @@ class PyInGameScreenEngine:
     def drawFood(self, app, pyscreen):
         drawLocation = self.getLocationRect(app, pyscreen, self.__level.foodLocation)
 
-        pygame.draw.rect(pyscreen, app.engine.style.foodColor, drawLocation, 0)
+        drawRect = pygame.Rect(drawLocation)
+
+        drawRect = drawRect.inflate(-8, -8)
+
+        pygame.draw.rect(pyscreen, app.engine.style.foodColor, drawRect, 0)
 
     def drawScore(self, app, pyscreen):
-        text = self.__scoreFont.render(str("Score"), True, app.engine.style.inGameScoreTextColor)
+        screenrect = pyscreen.get_rect()
+        playRectangle = self.getPlayRectangle(pyscreen)
 
-        labelTextRect = text.get_rect()
-        labelTextRect.topright = pyscreen.get_rect().topright
+        rightSideBarWidth = screenrect.right - playRectangle.right
 
-        labelTextRect.left -= 5
-        labelTextRect.top += 5
+        scoreHeaderText = self.__scoreFont.render(str("Score"), True, app.engine.style.inGameScoreTextColor)
+        scoreHeaderTextLocation = scoreHeaderText.get_rect()
 
-        pyscreen.blit(text,labelTextRect)
+        scoreHeaderLocation = pygame.Rect(playRectangle.right, playRectangle.top, rightSideBarWidth, scoreHeaderTextLocation.height)
 
-        text = self.__scoreFont.render(str(self.__level.score), True, app.engine.style.inGameScoreTextColor)
+        pygame.draw.rect(pyscreen, app.engine.style.inGameScoreHeaderBackgroundColor, scoreHeaderLocation)
 
-        scoreTextRect = text.get_rect()
-        scoreTextRect .topright = labelTextRect.bottomright
+        scoreHeaderTextLocation.midright = scoreHeaderLocation.midright
+        scoreHeaderTextLocation.x -= 5
 
-        pyscreen.blit(text, scoreTextRect)
+        pyscreen.blit(scoreHeaderText, scoreHeaderTextLocation)
+
+        scoreText = self.__scoreFont.render(str(self.__level.score), True, app.engine.style.inGameScoreTextColor)
+
+        scoreTextLocation = scoreText.get_rect()
+        scoreTextLocation.topright = scoreHeaderTextLocation.bottomright
+
+        pyscreen.blit(scoreText, scoreTextLocation)
 
         string = f"{self.__level.playerSpeed} + {self.__level.playerSpeedBoost:0.2f} t/s"
         text = self.__statsFont.render(string, True, app.engine.style.inGameStatsTextColor)
 
         textRect = text.get_rect()
-        textRect.topright = scoreTextRect.bottomright
+        textRect.topright = scoreTextLocation.bottomright
 
-        textRect .top += 5
+        textRect.top += 5
 
         pyscreen.blit(text, textRect)
 
