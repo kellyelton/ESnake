@@ -22,6 +22,7 @@ class Level:
         self.requestedPlayerDirection: Direction = None
         self.playerLocations = [self.center]
         self.playerLastTimeMoved = 0
+        self.playerLastTimeAte = 0
         self.playerDeathTime = 0
         self.isPlayerDead = False
         self.foodLocation = None # Needs to exist before we set it to random
@@ -105,6 +106,7 @@ class Level:
         if newLocationContents == "food":
             self.score += 1
             self.foodLocation = self.randomEmptyLocation
+            self.playerLastTimeAte = time
             removeTail = False
         elif newLocationContents == "player":
             self.isPlayerDead = True
