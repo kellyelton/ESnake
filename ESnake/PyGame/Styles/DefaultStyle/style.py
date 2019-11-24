@@ -9,11 +9,11 @@ class ClassicStyle:
 
         self.gameBackgroundColor = (0, 0, 0)
         self.inGameScoreTextColor = (255, 255, 255)
-        self.inGameScoreFontSize = 64
-        self.inGameScoreFont = self.getResourcePath("Fonts/AmaticSC-Regular.ttf")
+        self.inGameScoreFontSize = 40
+        self.inGameScoreFont = self.getResourcePath("Fonts/Alata-Regular.ttf")
         self.inGameStatsTextColor = (150, 255, 150)
-        self.inGameStatsFontSize = 20
-        self.inGameStatsFont = self.getResourcePath("Fonts/AmaticSC-Regular.ttf")
+        self.inGameStatsFontSize = 15
+        self.inGameStatsFont = self.getResourcePath("Fonts/Alata-Regular.ttf")
         self.playerColor = (255, 255, 255)
         self.playerDeadColor = (138, 3, 3)
         self.foodColor = (50, 255, 50)
