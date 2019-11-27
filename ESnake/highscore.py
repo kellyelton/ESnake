@@ -1,3 +1,5 @@
+import logging
+
 def updateHighScore(config, newHighScore: int) -> bool:
     fileStream = open(config.highScorePath, "r+")
 
@@ -9,7 +11,12 @@ def updateHighScore(config, newHighScore: int) -> bool:
             highScoreString = highScoreString.strip()
             highScore = int(highScoreString)
         except ValueError:
-            #TODO if highScoreString is empty, that's fine. Otherwise log the error because that means the file is bad.
+            logger = logging.getLogger(__name__)
+
+            # If highScoreString is empty that's normal
+            if highScoreString:
+                raise
+
             highScore = 0
 
         if newHighScore > highScore:
@@ -34,7 +41,10 @@ def getHighScore(config) -> int:
             highScoreString = highScoreString.strip()
             highScore = int(highScoreString)
         except ValueError:
-            #TODO if highScoreString is empty, that's fine. Otherwise log the error because that means the file is bad.
+            # If highScoreString is empty that's normal
+            if highScoreString:
+                raise
+                
             highScore = 0
     finally:
         fileStream.close()
