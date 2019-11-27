@@ -4,5 +4,4 @@ def loadStyle(styleName):
     if styleName.casefold() == 'classic'.casefold():
         return ClassicStyle()
     else:
-        #TODO log this failure
-        return ClassicStyle()
+        raise Exception(f"Style '{styleName}' could not be found.")
