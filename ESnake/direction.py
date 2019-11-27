@@ -9,7 +9,7 @@ class Direction:
             return Direction.down
         elif self.string == "down":
             return Direction.up
-        else: raise Exception(f"Invalid direction: {direction}")
+        else: raise Exception(f"Invalid direction: {self.string}")
 
     def __init__(self, direction):
         if isinstance(direction, str):
