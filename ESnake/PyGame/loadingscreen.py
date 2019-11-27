@@ -13,7 +13,7 @@ class PyLoadingScreenEngine:
 
     def draw(self, app, pyscreen):
         self.__count += 1
-        if self.__count >= 140:
+        if self.__count >= 100:
             app.screen = AppScreen.InGame
             self.__count = 0
 
