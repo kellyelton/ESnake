@@ -1,4 +1,5 @@
 import pygame
+import logging
 from ..helpers import *
 from ..appscreen import AppScreen
 from ..level import Level
@@ -8,8 +9,11 @@ from .postgamescreen import PyPostGameScreenEngine
 from .Styles import *
 
 class PyGameEngine:
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+
     def init(self, app):
-        print("engine init")
+        self.logger.debug("init")
 
         self._screenEngine = None
         self._previousAppScreen = None
@@ -22,6 +26,8 @@ class PyGameEngine:
 
     @screenEngine.setter
     def screenEngine(self, screenEngine):
+        self.logger.debug(f"Screen Engine changed to {screenEngine}")
+
         if self._screenEngine != None:
             if hasFunction(self._screenEngine, "stop"):
                 self._screenEngine.stop()
@@ -29,9 +35,11 @@ class PyGameEngine:
         self._screenEngine = screenEngine
 
     def run(self, app):
-        print("engine run")
+        self.logger.debug("run")
 
         if app.config.fullscreen:
+            self.logger.debug("Setting display to FullScreen")
+
             pyscreen = pygame.display.set_mode(app.config.screenSize, pygame.FULLSCREEN)
         else:
             pyscreen = pygame.display.set_mode(app.config.screenSize)
@@ -40,23 +48,28 @@ class PyGameEngine:
 
         clock = pygame.time.Clock()
 
-        while app.state == "running":
-            self.configureScreenEngine(app)
-            self.processEvents(app)
-            self.screenEngine.update(app)
-            self.draw(app, pyscreen)
+        self.logger.debug("entering run loop")
 
-            # max fps 60
-            clock.tick(app.config.maxfps)
+        try:
+            while app.state == "running":
+                self.configureScreenEngine(app)
+                self.processEvents(app)
+                self.screenEngine.update(app)
+                self.draw(app, pyscreen)
+
+                # max fps 60
+                clock.tick(app.config.maxfps)
+        finally:
+            self.logger.debug("exiting run loop")
 
     def processEvents(self, app):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 app.stop()
             elif self._screenEngine == None:
-                print(f"SKIPPING EVENT {event}")
+                self.logger.debug(f"skipping event {event}");
             else:
-                print(f"processing {event}")
+                self.logger.debug(f"processing event {event}");
                 self._screenEngine.processEvent(app, event)
 
     def draw(self, app, pyscreen):

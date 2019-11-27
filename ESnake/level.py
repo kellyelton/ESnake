@@ -1,4 +1,5 @@
 import random
+import logging
 from random import randint
 from .appscreen import AppScreen
 from .direction import Direction
@@ -10,6 +11,7 @@ class Level:
         return Level(40, 40, 8)
 
     def __init__(self, width, height, speed):
+        self.logger = logging.getLogger(__name__)
         self.width = width
         self.height = height
         self.playerSpeed = speed #tiles per second
@@ -69,9 +71,11 @@ class Level:
             msSincePlayerDied = time - self.playerDeathTime
 
             if msSincePlayerDied >= 3000:
+                self.logger.debug("done with death delay")
                 app.screen = AppScreen.PostGame
                 storedHighScore = updateHighScore(app.config, self.score)
                 if storedHighScore:
+                    self.logger.debug("Got a high score")
                     self.isHighScore = True
 
     def movePlayer(self, app, time):
@@ -82,6 +86,7 @@ class Level:
             # Don't allow reversing if we have a tail
             if len(self.playerLocations) > 1:
                 if self.playerDirection.opposite == newDirection:
+                    self.logger.debug(f"Can't move {newDirection}, while player is moving {self.playerDirection}")
                     newDirection = self.playerDirection # cancel out change
 
             self.playerDirection = newDirection
@@ -105,13 +110,16 @@ class Level:
 
         if newLocationContents == "food":
             self.score += 1
+            self.logger.debug(f"eating food. new score {self.score}")
             self.foodLocation = self.randomEmptyLocation
             self.playerLastTimeAte = time
             removeTail = False
         elif newLocationContents == "player":
+            self.logger.debug(f"player ran into themselves")
             self.isPlayerDead = True
             self.playerDeathTime = time
         elif newLocationContents == "wall":
+            self.logger.debug(f"player ran into a wall")
             self.isPlayerDead = True
             self.playerDeathTime = time
 

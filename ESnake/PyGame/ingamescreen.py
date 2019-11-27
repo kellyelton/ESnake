@@ -3,9 +3,11 @@ from ..appscreen import AppScreen
 from ..direction import Direction
 from ..level import Level
 from ..app import App
+import logging
 
 class PyInGameScreenEngine:
     def __init__(self, app: App, level: Level):
+        self.logger = logging.getLogger(__name__)
         self.__debugFont = pygame.font.SysFont("Lucida Console", 14)
         self.__scoreFont = pygame.font.Font(app.engine.style.inGameScoreFont, app.engine.style.inGameScoreFontSize)
         self.__statsFont = pygame.font.Font(app.engine.style.inGameStatsFont, app.engine.style.inGameStatsFontSize)
@@ -20,14 +22,19 @@ class PyInGameScreenEngine:
     def processEvent(self, app, event):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
+                self.logger.debug("Requested Direction changed to Left");
                 self.__level.requestedPlayerDirection = Direction.left
             elif event.key == pygame.K_RIGHT:
+                self.logger.debug("Requested Direction changed to Right");
                 self.__level.requestedPlayerDirection = Direction.right
             elif event.key == pygame.K_UP:
+                self.logger.debug("Requested Direction changed to Up");
                 self.__level.requestedPlayerDirection = Direction.up
             elif event.key == pygame.K_DOWN:
+                self.logger.debug("Requested Direction changed to Down");
                 self.__level.requestedPlayerDirection = Direction.down
             elif event.key == pygame.K_ESCAPE:
+                self.logger.debug("esc pressed, switch to post game");
                 app.screen = AppScreen.PostGame
     
     def update(self, app):

@@ -2,15 +2,25 @@ import enum
 from .helpers import *
 from .appscreen import AppScreen
 from .debug import Debug
+import logging
 
 class App:
-    def __init__(self, engine, config):
+    @property
+    def state(self): return self.__state
+
+    @state.setter
+    def state(self, value):
+        self.logger.info(value)
+        self.__state = value
+
+    def __init__(self, engine, config, debug : Debug):
+        self.logger = logging.getLogger(__name__)
         self.name = "ESnake"
-        self.state = ""
+        self.__state = ""
         self.screen = AppScreen.Loading
         self.config = config
         self.engine = engine
-        self.debug = Debug()
+        self.debug : Debug = debug
 
     def run(self):
         try:
