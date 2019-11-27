@@ -17,12 +17,10 @@ from ESnake.debug import Debug
 
 
 if __name__=='__main__':
-    logger: logging.Logger = None
+    logger: logging.Logger = logging.getLogger(__name__)
 
     try:
         logging.basicConfig(filename='log.txt', filemode='w', format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.DEBUG)
-
-        logger = logging.getLogger(__name__)
 
         logger.info("START")
 
