@@ -1,5 +1,5 @@
-class DefaultConfig:
-    def __init__(self):
+class Config:
+    def __init__(self, configDictionary = None):
         self.style = "classic"
         self.maxfps = 60
         self.fullscreen = False
