@@ -38,7 +38,7 @@ def loadConfig(logger: logging.Logger) -> Config:
             elif nodeName == 'screenSize':
                 xnode = nodeValue[0]
                 ynode = nodeValue[1]
-                xstring= xnode.value
+                xstring = xnode.value
                 ystring = ynode.value
                 x = int(xstring)
                 y = int(ystring)
