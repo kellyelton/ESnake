@@ -86,7 +86,7 @@ class Level:
             # Don't allow reversing if we have a tail
             if len(self.playerLocations) > 1:
                 if self.playerDirection.opposite == newDirection:
-                    self.logger.debug(f"Can't move {newDirection}, while player is moving {self.playerDirection}")
+                    #self.logger.debug(f"Can't move {newDirection}, while player is moving {self.playerDirection}")
                     newDirection = self.playerDirection # cancel out change
 
             self.playerDirection = newDirection
