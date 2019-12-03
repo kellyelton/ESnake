@@ -1,9 +1,6 @@
 import pygame
-from ..appscreen import AppScreen
-from ..direction import Direction
-from ..level import Level
-from ..app import App
 import logging
+from ESnake import *
 
 class PyInGameScreenEngine:
     def __init__(self, app: App, level: Level):

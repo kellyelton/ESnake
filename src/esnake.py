@@ -10,11 +10,9 @@ import traceback
 import logging
 import os
 import yaml
-from ESnake.app import App 
-from ESnake.config import *
-from ESnake.PyGame.engine import PyGameEngine
+from ESnake import *
+from ESnakePyGame import *
 from pprint import pformat
-from ESnake.debug import Debug
 
 def loadConfig(logger: logging.Logger) -> Config: 
     def parseBool(boolString: str) -> bool:
@@ -47,7 +45,11 @@ def loadConfig(logger: logging.Logger) -> Config:
 
         return config
 
-    yaml.SafeLoader.add_constructor('tag:yaml.org,2002:python/object:ESnake.config.Config', configConstructor)
+    def configRepresenter(dumper: yaml.Dumper, data):
+        return dumper.represent_yaml_object(u'!config', data, Config)
+
+    yaml.SafeLoader.add_constructor(u'!config', configConstructor)
+    yaml.add_representer(Config, configRepresenter)
 
     logger.info("loading config")
 
@@ -58,10 +60,8 @@ def loadConfig(logger: logging.Logger) -> Config:
     if not os.path.exists(configFilePath):
         logger.info(f"config file {configFilePath} not found. Creating")
 
-        config = Config()
-
         with open(configFilePath, "w") as fileStream:
-            yaml.safe_dump(config, fileStream)
+            yaml.dump(config, fileStream)
     else:
         logger.info(f"opening config file {configFilePath}")
         with open(configFilePath) as fileStream:
@@ -94,6 +94,7 @@ if __name__=='__main__':
 
         app.run()
     except Exception as exception:
-        logger.fatal("Unhandled Exception", exc_info=True)
+        message = str(exception)
+        logger.fatal(f"Unhandled Exception: {message}", exc_info=True)
     finally:
         logger.info("END")

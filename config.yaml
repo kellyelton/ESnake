@@ -1,8 +1,8 @@
-!!python/object:ESnake.config.Config
+!config
 fullscreen: false
 highScorePath: highscore
 maxfps: 60
 screenSize:
-- 1024
-- 768
+- 800
+- 600
 style: classic

@@ -1,5 +1,5 @@
 import pygame
-from ..appscreen import AppScreen
+from ESnake import *
 
 class PyLoadingScreenEngine:
     def __init__(self, app):

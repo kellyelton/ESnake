@@ -1,7 +1,7 @@
 import logging
 
 def updateHighScore(config, newHighScore: int) -> bool:
-    fileStream = open(config.highScorePath, "r+")
+    fileStream = open(config.highScorePath, "w+")
 
     try:
         highScore: int = 0
@@ -33,7 +33,7 @@ def updateHighScore(config, newHighScore: int) -> bool:
 def getHighScore(config) -> int:
     highScore: int = 0
 
-    fileStream = open(config.highScorePath, "r+")
+    fileStream = open(config.highScorePath, "w+")
     try:
 
         try:
