@@ -4,10 +4,10 @@ block_cipher = None
 
 
 a = Analysis(['rungame.py'],
-             pathex=['D:\\Source\\ESnake'],
+             pathex=['D:\\Source\\ESnake\\ESnake', 'D:\\Source\\ESnake\\ESnake\\PyGame'],
              binaries=[],
              datas=[],
-             hiddenimports=collect_submodules( 'ESnake' ),
+             hiddenimports=['ESnake', 'ESnake.PyGame'],
              hookspath=[],
              runtime_hooks=[],
              excludes=[],
@@ -19,15 +19,19 @@ pyz = PYZ(a.pure, a.zipped_data,
              cipher=block_cipher)
 exe = EXE(pyz,
           a.scripts,
-          a.binaries
-          a.zipfiles,
-          a.datas,
           [],
+          exclude_binaries=True,
           name='rungame',
           debug=False,
           bootloader_ignore_signals=False,
           strip=False,
           upx=True,
-          upx_exclude=[],
-          runtime_tmpdir=None,
           console=True )
+coll = COLLECT(exe,
+               a.binaries,
+               a.zipfiles,
+               a.datas,
+               strip=False,
+               upx=True,
+               upx_exclude=[],
+               name='rungame')

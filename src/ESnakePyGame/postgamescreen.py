@@ -1,7 +1,6 @@
 import pygame
 import logging
-from ..appscreen import AppScreen
-from ..highscore import *
+from ESnake import *
 
 class PyPostGameScreenEngine:
     def update(self, app): pass
