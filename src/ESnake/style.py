@@ -36,10 +36,10 @@ class Style:
         self.postGameInstructionsColor = (255, 128, 26)
 
     def getResourcePath(self, relativePath):
-        if sys._MEIPASS is None:
-            rootDirectory = os.path.dirname(os.path.abspath(__file__))
-        else:
+        if getattr(sys, 'frozen', False):
             rootDirectory = sys._MEIPASS
+        else:
+            rootDirectory = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
         rootDirectory = os.path.join(rootDirectory, "Resources")
 

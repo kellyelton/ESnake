@@ -1,7 +1,13 @@
 import logging
+import os
+
+def getHighScorePath():
+    return os.path.join(os.getcwd(), "highscore")
 
 def updateHighScore(config, newHighScore: int) -> bool:
-    fileStream = open(config.highScorePath, "a+")
+    path = getHighScorePath()
+
+    fileStream = open(path, "a+")
 
     try:
         fileStream.seek(0)
@@ -33,7 +39,9 @@ def updateHighScore(config, newHighScore: int) -> bool:
 def getHighScore(config) -> int:
     highScore: int = 0
 
-    fileStream = open(config.highScorePath, "a+")
+    path = getHighScorePath()
+
+    fileStream = open(path, "a+")
 
     try:
         fileStream.seek(0)
