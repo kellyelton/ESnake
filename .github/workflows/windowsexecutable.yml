@@ -23,8 +23,7 @@ jobs:
     - name: Configure Environment
       run: |
         pipenv install
-        pipenv shell
     - name: Build Executable
       run: |
-        pyinstaller --onefile esnake.spec
+        pipenv run pyinstaller --onefile esnake.spec
         
