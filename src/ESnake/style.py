@@ -1,6 +1,6 @@
 import os
 
-class ClassicStyle:
+class Style:
     def __init__(self):
         mainBorderColor = (52, 10, 63)
 
@@ -42,3 +42,9 @@ class ClassicStyle:
         path = os.path.join(rootDirectory, relativePath)
 
         return path
+
+def loadStyle(styleName):
+    if styleName.casefold() == 'classic'.casefold():
+        return Style()
+    else:
+        raise Exception(f"Style '{styleName}' could not be found.")

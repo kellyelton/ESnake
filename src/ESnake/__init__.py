@@ -1,7 +1,9 @@
-from ESnake.app import *
-from ESnake.config import *
-from ESnake.debug import *
-from ESnake.helpers import *
-from ESnake.level import *
-from ESnake.highscore import *
-from ESnake.appscreen import *
+from .debug import Debug
+from .appscreen import AppScreen
+from .app import App
+from .config import Config
+from .helpers import hasFunction
+from .highscore import getHighScore, updateHighScore
+from .direction import Direction
+from .level import Level
+from .style import loadStyle, Style

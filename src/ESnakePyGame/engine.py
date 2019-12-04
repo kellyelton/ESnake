@@ -1,8 +1,7 @@
 import pygame
 import logging
-from ESnake import *
-from .Styles import *
-from . import *
+from ESnake import loadStyle, hasFunction, AppScreen, Level
+from . import PyLoadingScreenEngine, PyInGameScreenEngine, PyPostGameScreenEngine
 
 class PyGameEngine:
     def __init__(self):

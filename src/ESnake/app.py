@@ -1,8 +1,6 @@
 import enum
-from .helpers import *
-from .appscreen import AppScreen
-from .debug import Debug
 import logging
+from . import AppScreen, Debug
 
 class App:
     @property

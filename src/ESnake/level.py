@@ -1,9 +1,7 @@
 import random
 import logging
 from random import randint
-from .appscreen import AppScreen
-from .direction import Direction
-from .highscore import *
+from . import updateHighScore, AppScreen, Direction
 
 class Level:
     @staticmethod
