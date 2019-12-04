@@ -55,6 +55,8 @@ def loadConfig(logger: logging.Logger) -> Config:
 
     configFilePath = "config.yaml"
 
+    configFilePath = os.path.join(os.getcwd(), configFilePath)
+
     config = Config()
 
     if not os.path.exists(configFilePath):
@@ -73,7 +75,9 @@ if __name__=='__main__':
     logger: logging.Logger = logging.getLogger(__name__)
 
     try:
-        logging.basicConfig(filename='log.txt', filemode='w', format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.DEBUG)
+        logPath = os.path.join(os.getcwd(), "log.txt")           
+
+        logging.basicConfig(filename=logPath, filemode='w', format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.DEBUG)
 
         logger.info("START")
 

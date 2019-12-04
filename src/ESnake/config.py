@@ -4,4 +4,3 @@ class Config:
         self.maxfps = 60
         self.fullscreen = False
         self.screenSize = [800, 600]
-        self.highScorePath = "highscore"
