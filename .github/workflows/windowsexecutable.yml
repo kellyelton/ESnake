@@ -1,9 +1,9 @@
-name: Python application
+name: Windows Executable
 
 on:
   push:
-    branches:
-      - master
+    branches: 
+      - "master"
 
 jobs:
   build:
