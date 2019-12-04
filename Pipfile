@@ -5,6 +5,7 @@ verify_ssl = true
 
 [dev-packages]
 pyinstaller = "*"
+bump2version = "*"
 
 [packages]
 pygame = "*"
