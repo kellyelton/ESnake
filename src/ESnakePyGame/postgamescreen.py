@@ -1,11 +1,11 @@
 import pygame
 import logging
-from ESnake import *
+from ESnake import AppScreen, getHighScore, App, Level
 
 class PyPostGameScreenEngine:
     def update(self, app): pass
 
-    def __init__(self, app, level):
+    def __init__(self, app: App, level: Level):
         self.logger = logging.getLogger(__name__)
         self.__level = level
         self.__gameOverFont = pygame.font.Font(app.engine.style.postGameGameOverFont, app.engine.style.postGameGameOverFontSize)

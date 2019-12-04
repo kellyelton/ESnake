@@ -1,7 +1,6 @@
 import ESnake
-import ESnakePyGame.Styles
 
-from .ingamescreen import *
-from .loadingscreen import *
-from .postgamescreen import *
-from .engine import *
+from .ingamescreen import PyInGameScreenEngine
+from .loadingscreen import PyLoadingScreenEngine
+from .postgamescreen import PyPostGameScreenEngine
+from .engine import PyGameEngine
