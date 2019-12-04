@@ -23,7 +23,17 @@ jobs:
     - name: Configure Environment
       run: |
         pipenv install --dev
+    - name: Version
+      env:
+        GAMEVERSION: unknown
+      run: |
+        pipenv run bumpversion patch
     - name: Build Executable
       run: |
         pipenv run pyinstaller --onefile esnake.spec
+    - name: Archive artifacts
+      uses: actions/upload-artifact@v1
+      with:
+        name: dist
+        path: dist
         
