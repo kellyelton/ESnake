@@ -2,12 +2,15 @@
 
 block_cipher = None
 
+additional_files = [
+    ('src/Resources', 'Resources')
+]
 
-a = Analysis(['rungame.py'],
-             pathex=['D:\\Source\\ESnake\\ESnake', 'D:\\Source\\ESnake\\ESnake\\PyGame'],
+a = Analysis(['src/esnake.py'],
+             pathex=['src'],
              binaries=[],
-             datas=[],
-             hiddenimports=['ESnake', 'ESnake.PyGame'],
+             datas=additional_files,
+             hiddenimports=['ESnake', 'ESnakePyGame'],
              hookspath=[],
              runtime_hooks=[],
              excludes=[],
@@ -21,7 +24,7 @@ exe = EXE(pyz,
           a.scripts,
           [],
           exclude_binaries=True,
-          name='rungame',
+          name='esnake',
           debug=False,
           bootloader_ignore_signals=False,
           strip=False,
@@ -34,4 +37,4 @@ coll = COLLECT(exe,
                strip=False,
                upx=True,
                upx_exclude=[],
-               name='rungame')
+               name='esnake')

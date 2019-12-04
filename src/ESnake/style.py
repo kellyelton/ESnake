@@ -1,4 +1,5 @@
 import os
+import sys
 
 class Style:
     def __init__(self):
@@ -35,7 +36,10 @@ class Style:
         self.postGameInstructionsColor = (255, 128, 26)
 
     def getResourcePath(self, relativePath):
-        rootDirectory = os.path.dirname(os.path.abspath(__file__))
+        if sys._MEIPASS is None:
+            rootDirectory = os.path.dirname(os.path.abspath(__file__))
+        else:
+            rootDirectory = sys._MEIPASS
 
         rootDirectory = os.path.join(rootDirectory, "Resources")
 
