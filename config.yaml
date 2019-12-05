@@ -1,8 +1,0 @@
-!config
-fullscreen: false
-highScorePath: highscore
-maxfps: 60
-screenSize:
-- 800
-- 600
-style: classic
