@@ -1,6 +1,6 @@
 .vscode
+.pyinstallerbuild
 __pycache__/
 log.txt
-build/
 dist/
 rungame.exe
