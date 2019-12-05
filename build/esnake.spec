@@ -3,11 +3,11 @@
 block_cipher = None
 
 additional_files = [
-    ('src/Resources', 'Resources')
+    ('../src/Resources', 'Resources')
 ]
 
-a = Analysis(['src/esnake.py'],
-             pathex=['src'],
+a = Analysis(['../src/esnake.py'],
+             pathex=['../src'],
              binaries=[],
              datas=additional_files,
              hiddenimports=['ESnake', 'ESnakePyGame'],
