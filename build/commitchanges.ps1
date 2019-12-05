@@ -9,6 +9,3 @@ git commit -m "v$new_version"
 
 Write-Output "Tagging"
 git tag -a v$new_version -m "Automated Release v$new_version"
-
-Write-Output "Pushing"
-git push origin --tags

@@ -19,7 +19,7 @@ jobs:
     - name: Configure Git
       uses: fregante/setup-git-token@v1
       with:
-        token: ${{ secrets.GITHUB_API_TOKEN }}
+        token: ${{ secrets.GITHUB_TOKEN }}
         name: Github Action
     - name: Set up Python 3.7
       uses: actions/setup-python@v1
@@ -35,8 +35,12 @@ jobs:
     - id: version
       name: Version Files
       run: ./build/version.ps1
-    - name: Pushing changed version files
-      run: ./build/pushversion.ps1
+    - name: Committing changed files
+      run: ./build/commitchanges.ps1
+    - name: Pushing changed files
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
     - name: Build Executable
       run: |
         pipenv run pyinstaller --workpath ./.pyinstallerbuild --onefile ./build/esnake.spec
@@ -51,4 +55,4 @@ jobs:
         files: |
           dist/esnake-${{ steps.version.outputs.new_version }}.exe
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_API_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
