@@ -36,9 +36,7 @@ jobs:
         git add esnake.spec
         git commit -m "v$new_version"
         git tag -a v$new_version -m "Automated Release v$new_version"
-        git push
-        git push origin v$new_version
-        echo ::set-output name=version::$new_version
+        git push origin --tags
     - name: Build Executable
       run: |
         pipenv run pyinstaller --onefile esnake.spec
