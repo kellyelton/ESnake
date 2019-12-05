@@ -19,7 +19,7 @@ jobs:
     - name: Configure Git
       uses: fregante/setup-git-token@v1
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.GITHUB_API_TOKEN }}
         name: Github Action
     - name: Set up Python 3.7
       uses: actions/setup-python@v1
@@ -51,4 +51,4 @@ jobs:
         files: |
           dist/esnake-${{ steps.version.outputs.new_version }}.exe
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_API_TOKEN }}
