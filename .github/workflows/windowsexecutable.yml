@@ -15,7 +15,7 @@ jobs:
     - name: Set Home
       run: |
         echo $Env:Home
-        echo '::set-env name=HOME::$Env:UserProfile'
+        echo "::set-env name=HOME::$Env:UserProfile"
     - name: Configure Git
       uses: fregante/setup-git-token@v1
       with:
