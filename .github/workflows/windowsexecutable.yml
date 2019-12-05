@@ -28,10 +28,9 @@ jobs:
     - id: version
       name: Version
       run: |
-        current_version=$(cat VERSION)
+        $current_version = Get-Content .\VERSION -Raw
         pipenv run bumpversion --current-version $current_version patch VERSION
-        new_version=$(cat VERSION)
-        pipenv run bumpversion --current-version $current_version patch VERSION
+        $new_version = Get-Content .\VERSION -Raw
         git add VERSION
         pipenv run bumpversion --current-version $current_version patch esnake.spec
         git add esnake.spec
@@ -39,7 +38,7 @@ jobs:
         git tag -a v$new_version
         git push
         git push origin v$new_version
-        echo ::set-output name=version::$(cat VERSION)
+        echo ::set-output name=version::$new_version
     - name: Build Executable
       run: |
         pipenv run pyinstaller --onefile esnake.spec
