@@ -29,10 +29,10 @@ jobs:
       name: Version
       run: |
         $current_version = Get-Content .\VERSION -Raw
-        pipenv run bumpversion --current-version $current_version patch VERSION
+        pipenv run bumpversion --allow-dirty --current-version $current_version patch VERSION
         $new_version = Get-Content .\VERSION -Raw
         git add VERSION
-        pipenv run bumpversion --current-version $current_version patch esnake.spec
+        pipenv run bumpversion --allow-dirty --current-version $current_version patch esnake.spec
         git add esnake.spec
         git commit -m "v$new_version"
         git tag -a v$new_version
