@@ -12,10 +12,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
+    - name: Set Home
+      run: |
+        echo $Env:Home
+        echo '::set-env name=HOME::$Env:UserProfile'
     - name: Configure Git
       uses: fregante/setup-git-token@v1
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
+        name: Github Action
     - name: Set up Python 3.7
       uses: actions/setup-python@v1
       with:
