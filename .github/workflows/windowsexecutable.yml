@@ -48,11 +48,11 @@ jobs:
       uses: actions/upload-artifact@v1
       with:
         name: exe
-        path: dist/esnake-${{ steps.version.outputs.new_version }}.exe
+        path: dist/esnake.exe
     - name: Release
       uses: ncipollo/release-action@v1
       with:
-        artifact: "dist/esnake-${{ steps.version.outputs.new_version }}.exe"
+        artifact: "dist/esnake.exe"
         token: ${{ secrets.GITHUB_TOKEN }}
         tag: v${{ steps.version.outputs.new_version }}
         draft: true
