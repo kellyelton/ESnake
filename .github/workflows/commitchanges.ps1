@@ -2,7 +2,6 @@ $new_version = Get-Content .\VERSION -Raw
 Write-Output "New Version: $new_version"
 
 git add VERSION
-git add .\src\esnake.spec
 
 Write-Output "Committing"
 git commit -m "v$new_version"
