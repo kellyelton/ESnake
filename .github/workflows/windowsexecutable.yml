@@ -55,3 +55,4 @@ jobs:
         artifact: "dist/esnake-${{ steps.version.outputs.new_version }}.exe"
         token: ${{ secrets.GITHUB_TOKEN }}
         tag: v${{ steps.version.outputs.new_version }}
+        draft: true
