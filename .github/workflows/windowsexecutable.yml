@@ -37,10 +37,6 @@ jobs:
       run: ./.github/workflows/version.ps1
     - name: Committing changed files
       run: ./.github/workflows/commitchanges.ps1
-    - name: Pushing changed files
-      uses: ad-m/github-push-action@master
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
     - name: Build Executable
       run: |
         pipenv run pyinstaller --onefile ./src/esnake.spec
@@ -49,6 +45,10 @@ jobs:
       with:
         name: exe
         path: dist/esnake.exe
+    - name: Pushing changed files
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
     - name: Release
       uses: ncipollo/release-action@v1
       with:
