@@ -34,16 +34,16 @@ jobs:
         pipenv install --dev
     - id: version
       name: Version Files
-      run: ./build/version.ps1
+      run: ./.github/workflows/version.ps1
     - name: Committing changed files
-      run: ./build/commitchanges.ps1
+      run: ./.github/workflows/commitchanges.ps1
     - name: Pushing changed files
       uses: ad-m/github-push-action@master
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
     - name: Build Executable
       run: |
-        pipenv run pyinstaller --workpath ./.pyinstallerbuild --onefile ./build/esnake.spec
+        pipenv run pyinstaller --onefile ./src/esnake.spec
     - name: Archive artifacts
       uses: actions/upload-artifact@v1
       with:
