@@ -50,9 +50,8 @@ jobs:
         name: exe
         path: dist/esnake-${{ steps.version.outputs.new_version }}.exe
     - name: Release
-      uses: softprops/action-gh-release@v1
+      uses: ncipollo/release-action@v1
       with:
-        files: |
-          dist/esnake-${{ steps.version.outputs.new_version }}.exe
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        artifact: "dist/esnake-${{ steps.version.outputs.new_version }}.exe"
+        token: ${{ secrets.GITHUB_TOKEN }}
+        tag: v${{ steps.version.outputs.new_version }}
