@@ -92,7 +92,9 @@ if __name__=='__main__':
 
         engine = PyGameEngine()
 
-        app = App(engine, config, debug)
+        exePath = os.path.join(os.path.dirname(__file__), "esnake.exe")
+
+        app = App(engine, config, exePath, debug)
 
         logger.info("running")
 
