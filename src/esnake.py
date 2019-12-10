@@ -129,8 +129,9 @@ if __name__=='__main__':
 
         if len(sys.argv) >= 3:
             if sys.argv[1] == "UPDATE":
-               overwritePath = sys.argv[2] 
-               logpath = "updatelog.txt"
+                runUpdater = True
+                overwritePath = sys.argv[2] 
+                logpath = "updatelog.txt"
 
         logpath = os.path.join(os.getcwd(), logpath)           
 
