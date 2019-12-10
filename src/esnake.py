@@ -144,7 +144,7 @@ if __name__=='__main__':
         exePath = None
 
         if not isDebugging:
-            exePath = os.path.dirname(sys.executable)
+            exePath = sys.executable
 
         logger.info(f"exePath: {exePath}")
 
