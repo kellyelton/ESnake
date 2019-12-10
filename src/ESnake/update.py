@@ -89,7 +89,7 @@ class Updater():
             subprocess.Popen([
                 downloadPath,
                 "UPDATE",
-                f"'{self.exelocation}'"
+                self.exelocation
             ])
 
             self.shutdownForUpdate = True
