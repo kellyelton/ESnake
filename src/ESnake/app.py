@@ -1,6 +1,7 @@
 import enum
 import logging
 from . import AppScreen, Debug
+from .update import versiontuple
 
 class App:
     @property
@@ -11,9 +12,11 @@ class App:
         self.logger.info(value)
         self.__state = value
 
-    def __init__(self, engine, config, debug : Debug):
+    def __init__(self, engine, config, exelocation, debug : Debug):
         self.logger = logging.getLogger(__name__)
         self.name = "ESnake"
+        self.version = versiontuple("0.1.6.0")
+        self.exelocation = exelocation
         self.__state = ""
         self.screen = AppScreen.Loading
         self.config = config

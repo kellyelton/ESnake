@@ -10,6 +10,9 @@ import traceback
 import logging
 import os
 import yaml
+import shutil
+import subprocess
+import time
 from ESnake import *
 from ESnakePyGame import *
 from pprint import pformat
@@ -71,32 +74,89 @@ def loadConfig(logger: logging.Logger) -> Config:
 
     return config
 
+def update(logger, exePath, overwritePath):
+    while True:
+        tryCount = 0
+        try:
+            logger.info(f"Trying to replacing file {overwritePath} with {exePath}")
+
+            shutil.copy2(exePath, overwritePath)
+
+            logger.info(f"Replaced file {overwritePath}")
+
+            break
+        except Exception as exception:
+            logger.warn("Error replacing file", exc_info=True)
+
+            tryCount += 1
+
+            if tryCount >= 5:
+                raise Exception("Unable to update, file couldn't be replaced")
+
+            time.sleep(1000)
+
+    logger.info(f"Launching updated app {overwritePath}")
+
+    subprocess.Popen([
+        overwritePath
+    ])
+
+def runGame(logger, exePath):
+    debug = Debug()
+    debugString = pformat(vars(debug))
+    logger.info("Debug Settings")
+    logger.info(debugString)
+
+    config = loadConfig(logger)
+    configString = pformat(vars(config))
+    logger.info(configString)
+
+    engine = PyGameEngine()
+
+    app = App(engine, config, exePath, debug)
+
+    logger.info("running")
+
+    app.run()
+
 if __name__=='__main__':
     logger: logging.Logger = logging.getLogger(__name__)
 
     try:
-        logPath = os.path.join(os.getcwd(), "log.txt")           
+        logpath = "log.txt"
+        runUpdater = False
+        overwritePath = None
 
-        logging.basicConfig(filename=logPath, filemode='w', format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.DEBUG)
+        if len(sys.argv) >= 3:
+            if sys.argv[1] == "UPDATE":
+               overwritePath = sys.argv[2] 
+               logpath = "updatelog.txt"
+
+        logpath = os.path.join(os.getcwd(), logpath)           
+
+        logging.basicConfig(filename=logpath, filemode='w', format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.DEBUG)
 
         logger.info("START")
 
-        debug = Debug()
-        debugString = pformat(vars(debug))
-        logger.info("Debug Settings")
-        logger.info(debugString)
+        doUpdate = False
+        overwritePath = None
 
-        config = loadConfig(logger)
-        configString = pformat(vars(config))
-        logger.info(configString)
+        # log command line arguments
+        count = 0
+        for arg in sys.argv:
+            logger.info(f"ARG {count}: {arg}")
 
-        engine = PyGameEngine()
+            count+=1
 
-        app = App(engine, config, debug)
+        exePath = os.path.join(os.path.dirname(__file__), "esnake.exe")
 
-        logger.info("running")
+        if runUpdater:
+            logger.info("running updater")
+            update(logger, exePath, overwritePath)
+        else:
+            logger.info("running game")
+            runGame(logger, exePath)
 
-        app.run()
     except Exception as exception:
         message = str(exception)
         logger.fatal(f"Unhandled Exception: {message}", exc_info=True)

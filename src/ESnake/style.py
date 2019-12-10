@@ -7,8 +7,11 @@ class Style:
 
         self.loadingBackgroundColor = (50, 0, 0)
         self.loadingTextColor = (200, 200, 200)
-        self.loadingScreenFontSize = 64
-        self.loadingScreenFont = self.getResourcePath("Fonts/Amatic-Bold.ttf")
+        self.loadingScreenFontSize = 46
+        self.loadingScreenFont = self.getResourcePath("Fonts/Alata-Regular.ttf")
+        self.loadingMinorTextColor = (150, 150, 150)
+        self.loadingScreenMinorFontSize = 24
+        self.loadingScreenMinorFont = self.getResourcePath("Fonts/Alata-Regular.ttf")
 
         self.gameBackgroundColor = (0, 0, 0)
         self.inGameWallColor = mainBorderColor
