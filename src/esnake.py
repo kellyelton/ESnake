@@ -139,14 +139,21 @@ if __name__=='__main__':
 
         logger.info("START")
 
+        isDebugging = not getattr(sys, 'frozen', False)
+
+        exePath = None
+
+        if not isDebugging:
+            exePath = os.path.dirname(sys.executable)
+
+        logger.info(f"exePath: {exePath}")
+
         # log command line arguments
         count = 0
         for arg in sys.argv:
             logger.info(f"ARG {count}: {arg}")
 
             count+=1
-
-        exePath = os.path.join(os.path.dirname(__file__), "esnake.exe")
 
         if runUpdater:
             logger.info("running updater")
