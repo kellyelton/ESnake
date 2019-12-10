@@ -93,7 +93,7 @@ def update(logger, exePath, overwritePath):
             if tryCount >= 5:
                 raise Exception("Unable to update, file couldn't be replaced")
 
-            time.sleep(1000)
+            time.sleep(1)
 
     logger.info(f"Launching updated app {overwritePath}")
 
