@@ -139,9 +139,6 @@ if __name__=='__main__':
 
         logger.info("START")
 
-        doUpdate = False
-        overwritePath = None
-
         # log command line arguments
         count = 0
         for arg in sys.argv:
