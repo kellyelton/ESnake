@@ -75,8 +75,9 @@ def loadConfig(logger: logging.Logger) -> Config:
     return config
 
 def update(logger, exePath, overwritePath):
+    tryCount = 0
+
     while True:
-        tryCount = 0
         try:
             logger.info(f"Trying to replacing file {overwritePath} with {exePath}")
 
