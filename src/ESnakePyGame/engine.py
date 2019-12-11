@@ -39,7 +39,7 @@ class PyGameEngine:
         else:
             pyscreen = pygame.display.set_mode(app.config.screenSize)
 
-        pygame.display.set_caption(app.name)
+        pygame.display.set_caption(app.name + f" - v{app.version[0]}.{app.version[1]}.{app.version[2]}")
 
         clock = pygame.time.Clock()
 
