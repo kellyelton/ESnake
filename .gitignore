@@ -2,5 +2,7 @@
 .pyinstallerbuild
 __pycache__/
 log.txt
+updatelog.txt
+config.yaml
 dist/
 rungame.exe
