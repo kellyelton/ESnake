@@ -1,107 +1,162 @@
 import pygame
 import logging
-from ESnake.app import App
-from ESnake.appscreen import AppScreen
-from ESnake.style import loadStyle
 from ESnake.helpers import hasFunction
 from ESnake.level import Level
-from ESnakePyGame.ingamescreen import PyInGameScreenEngine
-from ESnakePyGame.loadingscreen import PyLoadingScreenEngine 
-from ESnakePyGame.postgamescreen import PyPostGameScreenEngine
+from ESnake.session import Session
+from ESnake.update import versiontuple
+from ESnakePyGame.config import Config
+from ESnakePyGame.screen import Screen
+from ESnakePyGame.style import Style, loadStyle
 
 class PyGameEngine:
-    def __init__(self):
-        self.logger = logging.getLogger(__name__)
+    def __init__(self, appname: str, appversion: versiontuple, config: Config, exelocation: str):
+        self._log = logging.getLogger(__name__)
 
-    def init(self, app):
-        self.logger.debug("init")
+        self._log.debug("init")
 
+        self._screen: Screen = None
+        self._nextScreen: Screen = Screen.Loading
         self._screenEngine = None
+        self._session: Session = None
         self._previousAppScreen = None
-        self.style = loadStyle(app.config.style)
+        self._config: Config = config
+        self._style: Style = loadStyle(self._config.style)
+        self._name: str = appname
+        self._version: versiontuple = appversion
+        self._shutdown: bool = False
+        self._exelocation: str = exelocation
 
         pygame.init()
 
     @property
+    def name(self) -> str: return self._name
+
+    @property
+    def version(self) -> versiontuple: return self._version
+
+    @property
+    def config(self) -> Config: return self._config
+
+    @property
+    def style(self) -> Style: return self._style
+
+    @property
+    def session(self) -> Session: return self._session
+
+    @property
+    def screen(self) -> Screen: return self._screen
+
+    @property
+    def exelocation(self) -> str: return self._exelocation
+
+    @screen.setter
+    def screen(self, screen: Screen):
+        if screen == None: raise Exception(f"Can't set screen to None")
+
+        if self.screen == screen: return
+
+        self._nextScreen = screen
+
+    @property
     def screenEngine(self): return self._screenEngine
 
-    @screenEngine.setter
-    def screenEngine(self, screenEngine):
-        self.logger.debug(f"Screen Engine changed to {screenEngine}")
+    def run(self):
+        self._log.debug("run")
 
-        if self._screenEngine != None:
-            if hasFunction(self._screenEngine, "stop"):
-                self._screenEngine.stop()
+        if self.config.fullscreen:
+            self._log.debug("Setting display to FullScreen")
 
-        self._screenEngine = screenEngine
-
-    def run(self, app):
-        self.logger.debug("run")
-
-        if app.config.fullscreen:
-            self.logger.debug("Setting display to FullScreen")
-
-            pyscreen = pygame.display.set_mode(app.config.screenSize, pygame.FULLSCREEN)
+            pyscreen = pygame.display.set_mode(self.config.screenSize, pygame.FULLSCREEN)
         else:
-            pyscreen = pygame.display.set_mode(app.config.screenSize)
+            pyscreen = pygame.display.set_mode(self.config.screenSize)
 
-        pygame.display.set_caption(app.name + f" - v{app.version[0]}.{app.version[1]}.{app.version[2]}")
+        pygame.display.set_caption(self.name + f" - v{self.version[0]}.{self.version[1]}.{self.version[2]}")
 
         clock = pygame.time.Clock()
 
-        self.logger.debug("entering run loop")
+        self._log.debug("entering run loop")
 
         try:
-            while app.state == "running":
-                self.configureScreenEngine(app)
-                self.processEvents(app)
-                self.screenEngine.update(app)
-                self.draw(app, pyscreen)
+            while not self._shutdown:
+                time = pygame.time.get_ticks()
+
+                self.configureScreenEngine()
+                self.processEvents()
+                self.screenEngine.update(time)
+                self.draw(pyscreen, time)
 
                 # max fps 60
                 # TODO: Something tells me this isn't quite right
-                clock.tick(app.config.maxfps)
+                clock.tick(self.config.maxfps)
         finally:
-            self.logger.debug("exiting run loop")
+            self._log.debug("exiting run loop")
 
-    def processEvents(self, app):
+    def processEvents(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                app.stop()
+                self.shutdown()
             elif self._screenEngine == None:
-                self.logger.debug(f"skipping event {event}");
+                self._log.debug(f"skipping event {event}");
             else:
-                self.logger.debug(f"processing event {event}");
-                self._screenEngine.processEvent(app, event)
+                self._log.debug(f"processing event {event}");
+                self._screenEngine.processEvent(event)
 
-    def draw(self, app, pyscreen):
+    def draw(self, pyscreen, time: int):
         if self._screenEngine == None:
             pass
         else:
-            self._screenEngine.draw(app, pyscreen)
+            self._screenEngine.draw(pyscreen, time)
 
         ## flip buffer
         pygame.display.flip()
 
-    def configureScreenEngine(self, app):
-        if self._previousAppScreen == app.screen: return
+    def configureScreenEngine(self):
+        if self._nextScreen == None: return
 
-        self._previousAppScreen = app.screen
+        self._previousAppScreen = self._screen
 
-        self.screenEngine = self.createScreenEngine(app, app.screen)
+        self._screen = self._nextScreen
+
+        self._nextScreen = None
+
+        oldScreenEngine = self._screenEngine
+        self._screenEngine = self.createScreenEngine(self._screen)
+
+        if oldScreenEngine != None:
+            if hasFunction(oldScreenEngine, "stop"):
+                oldScreenEngine.stop()
+
+        self._log.debug(f"Screen Engine changed to {self._screenEngine}")
         
         if hasFunction(self.screenEngine, "start"):
             time = pygame.time.get_ticks()
-            self.screenEngine.start(app, time)
+            self.screenEngine.start(time)
 
-    def createScreenEngine(self, app: App, appScreen: AppScreen):
-        if app.screen == AppScreen.Loading:
-            return PyLoadingScreenEngine(app)
-        elif app.screen == AppScreen.InGame:
-            return PyInGameScreenEngine(app)
-        elif app.screen == AppScreen.PostGame:
-            previousEngine = self._screenEngine
+    def createScreenEngine(self, screen: Screen):
+        # Imported inside of this method to avoid circular dependancy with PyGameEngine
+        import ESnakePyGame.loadingscreen
+        import ESnakePyGame.ingamescreen
+        import ESnakePyGame.postgamescreen
 
-            return PyPostGameScreenEngine(app)
+        if screen == Screen.Loading:
+            return ESnakePyGame.loadingscreen.PyLoadingScreenEngine(self)
+        elif screen == Screen.InGame:
+            return ESnakePyGame.ingamescreen.PyInGameScreenEngine(self)
+        elif screen == Screen.PostGame:
+            return ESnakePyGame.postgamescreen.PyPostGameScreenEngine(self)
         else:
             raise Exception("Not Implemented")
+
+    def newGame(self, level: Level = None):
+        if level == None:
+            level = Level.default()
+
+        self._session = Session()
+
+        self._session.level = level
+
+        self.screen = Screen.InGame
+    
+    def shutdown(self):
+        self._log.info("shutdown")
+        self._shutdown = True

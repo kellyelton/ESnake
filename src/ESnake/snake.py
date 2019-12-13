@@ -2,7 +2,6 @@ import logging
 from ESnake.direction import Direction
 from ESnake.location import Location
 from ESnake.helpers import hasFunction
-from ESnake.highscore import getHighScore, updateHighScore
 
 class Snake:
     def __init__(self, id: int, speed: float, location: Location, level):

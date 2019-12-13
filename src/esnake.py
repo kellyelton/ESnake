@@ -14,10 +14,9 @@ import shutil
 import subprocess
 import time
 from pprint import pformat
-from ESnake.config import Config
-from ESnake.debug import Debug
+import ESnake.version
+from ESnakePyGame.config import Config
 from ESnakePyGame.engine import PyGameEngine
-from ESnake.app import App
 
 def loadConfig(logger: logging.Logger) -> Config: 
     def parseBool(boolString: str) -> bool:
@@ -47,6 +46,9 @@ def loadConfig(logger: logging.Logger) -> Config:
                 y = int(ystring)
 
                 config.screenSize = [x, y]
+            elif nodeName == "debug":
+                # TODO: read debug sub class
+                pass
 
         return config
 
@@ -105,22 +107,17 @@ def update(logger, exePath, overwritePath):
     ])
 
 def runGame(logger, exePath):
-    debug = Debug()
-    debugString = pformat(vars(debug))
-    logger.info("Debug Settings")
-    logger.info(debugString)
-
     config = loadConfig(logger)
     configString = pformat(vars(config))
     logger.info(configString)
 
-    engine = PyGameEngine()
+    version = ESnake.version.Version
 
-    app = App(engine, config, exePath, debug)
+    engine = PyGameEngine("Snek", version, config, exePath)
 
     logger.info("running")
 
-    app.run()
+    engine.run()
 
 if __name__=='__main__':
     logger: logging.Logger = logging.getLogger(__name__)

@@ -1,6 +1,6 @@
 import enum
 
-class AppScreen(enum.Enum): 
+class Screen(enum.Enum): 
     Loading = 1
     MainMenu = 2
     InGame = 5 

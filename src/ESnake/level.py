@@ -1,7 +1,6 @@
 import random
 import logging
 from random import randint
-from ESnake.appscreen import AppScreen
 from ESnake.snake import Snake
 from ESnake.location import Location
 from ESnake.modifiers import SpeedBoostFromIntervalModifier
@@ -44,15 +43,8 @@ class Level:
 
         return location
     
-    def update(self, app, time):
-        if not self.player.state == "dead":
-            self.player.update(time)
-        else:
-            msSincePlayerDied = time - self.player.deathTime
-
-            if msSincePlayerDied >= 3000:
-                self._log.debug("done with death delay")
-                app.screen = AppScreen.PostGame
+    def update(self, time: int):
+        pass
 
     def getContents(self, location: Location):
         if location == self.foodLocation:

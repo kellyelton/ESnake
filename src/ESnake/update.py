@@ -6,9 +6,8 @@ import tempfile
 import io
 import os
 import subprocess
+from ESnake.version import versiontuple
 
-def versiontuple(v):
-    return tuple(map(int, (v.split("."))))
 
 def getLatestVersion():
     response = requests.get("https://api.github.com/repos/kellyelton/esnake/releases/latest")
