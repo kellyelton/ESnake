@@ -15,7 +15,7 @@ class App:
     def __init__(self, engine, config, exelocation, debug : Debug):
         self.logger = logging.getLogger(__name__)
         self.name = "ESnake"
-        self.version = versiontuple("0.1.16.0")
+        self.version = versiontuple("0.1.17.0")
         self.exelocation = exelocation
         self.__state = ""
         self.screen = AppScreen.Loading
