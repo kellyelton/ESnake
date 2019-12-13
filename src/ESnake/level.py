@@ -4,9 +4,9 @@ from random import randint
 from . import updateHighScore, AppScreen, Direction
 
 class Level:
-    @staticmethod
-    def default():
-        return Level(40, 40, 8)
+    @classmethod
+    def default(cls):
+        return cls(40, 40, 8)
 
     def __init__(self, width, height, speed):
         self.logger = logging.getLogger(__name__)

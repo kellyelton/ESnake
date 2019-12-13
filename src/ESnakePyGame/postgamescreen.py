@@ -5,21 +5,20 @@ from ESnake import AppScreen, getHighScore, App, Level
 class PyPostGameScreenEngine:
     def update(self, app): pass
 
-    def __init__(self, app: App, level: Level):
+    def __init__(self, app: App):
         self.logger = logging.getLogger(__name__)
-        self.__level = level
         self.__gameOverFont = pygame.font.Font(app.engine.style.postGameGameOverFont, app.engine.style.postGameGameOverFontSize)
         self.__scoreFont = pygame.font.Font(app.engine.style.postGameScoreFont, app.engine.style.postGameScoreFontSize)
         self.__instructionsFont = pygame.font.Font(app.engine.style.postGameInstructionsFont, app.engine.style.postGameInstructionsFontSize)
 
-    def processEvent(self, app, event):
+    def processEvent(self, app: App, event):
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_ESCAPE:
                 self.logger.debug("pressed esc")
                 app.stop()
             elif event.key == pygame.K_RETURN:
                 self.logger.debug("pressed enter")
-                app.screen = AppScreen.InGame
+                app.newGame()
 
     def draw(self, app, pyscreen):
         pyscreen.fill(app.engine.style.postGameBackgroundColor)
@@ -37,11 +36,13 @@ class PyPostGameScreenEngine:
 
         pyscreen.blit(gameOverText, gameOverTextRect)
 
-    def drawScoreText(self, app, pyscreen):
-        if self.__level.isHighScore:
-            scoreString = "New High Score: " + str(self.__level.score)
+    def drawScoreText(self, app: App, pyscreen):
+        level = app.session.level
+
+        if level.isHighScore:
+            scoreString = "New High Score: " + str(level.score)
         else:
-            scoreString = "Score: " + str(self.__level.score)
+            scoreString = "Score: " + str(level.score)
 
         highScore = getHighScore(app.config)
 

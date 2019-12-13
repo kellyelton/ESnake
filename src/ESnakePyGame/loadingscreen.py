@@ -1,8 +1,8 @@
 import pygame
-from ESnake import AppScreen, update
+from ESnake import App, AppScreen, update
 
 class PyLoadingScreenEngine:
-    def __init__(self, app):
+    def __init__(self, app: App):
         self.__dotCount = 0
         self.__font = pygame.font.Font(app.engine.style.loadingScreenFont, app.engine.style.loadingScreenFontSize)
         self.__minorfont = pygame.font.Font(app.engine.style.loadingScreenFont, app.engine.style.loadingScreenFontSize - 10)
@@ -13,8 +13,8 @@ class PyLoadingScreenEngine:
         self.status = "Loading"
         self.minorstatus = ""
 
-    def processEvent(self, app, event): pass
-    def update(self, app): 
+    def processEvent(self, app: App, event): pass
+    def update(self, app: App): 
         now = pygame.time.get_ticks()
 
         if self.__state == "initializing":
@@ -41,13 +41,13 @@ class PyLoadingScreenEngine:
             timeSinceLoadingStarted = now - self.__loadingStartTime
 
             if timeSinceLoadingStarted >= 1000:
-                app.screen = AppScreen.InGame
+                app.newGame()
         elif self.__state == "shutting down":
             pass
         else:
             raise Exception(f"Invalid state {self.__state}")
 
-    def draw(self, app, pyscreen):
+    def draw(self, app: App, pyscreen):
         now = pygame.time.get_ticks()
 
         msSinceLastDotUpdate = now - self.__lastUpdateDotsTime

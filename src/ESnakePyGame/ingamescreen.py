@@ -3,43 +3,40 @@ import logging
 from ESnake import Direction, AppScreen, App, Level
 
 class PyInGameScreenEngine:
-    def __init__(self, app: App, level: Level):
+    def __init__(self, app: App):
         self.logger = logging.getLogger(__name__)
         self.__debugFont = pygame.font.SysFont("Lucida Console", 14)
         self.__scoreFont = pygame.font.Font(app.engine.style.inGameScoreFont, app.engine.style.inGameScoreFontSize)
         self.__statsFont = pygame.font.Font(app.engine.style.inGameStatsFont, app.engine.style.inGameStatsFontSize)
-        #TODO: Make this self.level
-        self.__level: Level = level
         self.__playerDeadSections: int = 0
         self.__lastDeadSectionAdded: int = 0
 
-    @property
-    def level(self): return self.__level
+    def processEvent(self, app: App, event):
+        level = app.session.level
 
-    def processEvent(self, app, event):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
                 self.logger.debug("Requested Direction changed to Left");
-                self.__level.requestedPlayerDirection = Direction.left
+                level.requestedPlayerDirection = Direction.left
             elif event.key == pygame.K_RIGHT:
                 self.logger.debug("Requested Direction changed to Right");
-                self.__level.requestedPlayerDirection = Direction.right
+                level.requestedPlayerDirection = Direction.right
             elif event.key == pygame.K_UP:
                 self.logger.debug("Requested Direction changed to Up");
-                self.__level.requestedPlayerDirection = Direction.up
+                level.requestedPlayerDirection = Direction.up
             elif event.key == pygame.K_DOWN:
                 self.logger.debug("Requested Direction changed to Down");
-                self.__level.requestedPlayerDirection = Direction.down
+                level.requestedPlayerDirection = Direction.down
             elif event.key == pygame.K_ESCAPE:
                 self.logger.debug("esc pressed, switch to post game");
                 app.screen = AppScreen.PostGame
     
-    def update(self, app):
+    def update(self, app: App):
         now = pygame.time.get_ticks()
 
-        self.__level.update(app, now)
+        app.session.level.update(app, now)
 
-    def draw(self, app, pyscreen):
+    def draw(self, app: App, pyscreen):
         now = pygame.time.get_ticks()
 
         pyscreen.fill(app.engine.style.gameBackgroundColor)
@@ -49,12 +46,14 @@ class PyInGameScreenEngine:
         self.drawPlayer(app, pyscreen, now)
         self.drawScore(app, pyscreen)
         
-    def drawBorder(self, app, pyscreen):
+    def drawBorder(self, app: App, pyscreen):
+        level = app.session.level
+
         borderColor = app.engine.style.inGameWallColor
 
-        tileSize = self.getTileSize(pyscreen)
+        tileSize = self.getTileSize(level, pyscreen)
 
-        playRect = self.getPlayRectangle(pyscreen)
+        playRect = self.getPlayRectangle(level, pyscreen)
 
         topRect = pygame.Rect(playRect.topleft, (playRect.width, tileSize))
         leftRect = pygame.Rect(playRect.topleft, (tileSize, playRect.height))
@@ -66,8 +65,10 @@ class PyInGameScreenEngine:
         pygame.draw.rect(pyscreen, borderColor, rightRect, 0)
         pygame.draw.rect(pyscreen, borderColor, bottomRect, 0)
 
-    def drawPlayer(self, app, pyscreen, now):
-        if self.__level.isPlayerDead:
+    def drawPlayer(self, app: App, pyscreen, now):
+        level = app.session.level
+
+        if level.isPlayerDead:
             text = self.__scoreFont.render("RIP", True, app.engine.style.playerDeadColor)
 
             textRect = text.get_rect()
@@ -80,17 +81,17 @@ class PyInGameScreenEngine:
                 self.__lastDeadSectionAdded = now
                 self.__playerDeadSections += 1
 
-        timeSinceLastAte = now - self.__level.playerLastTimeAte
+        timeSinceLastAte = now - level.playerLastTimeAte
 
-        playerSegmentCount = len(self.__level.playerLocations)
-        for index, playerLocation in enumerate(reversed(self.__level.playerLocations)):
+        playerSegmentCount = len(level.playerLocations)
+        for index, playerLocation in enumerate(reversed(level.playerLocations)):
             realIndex = (playerSegmentCount - index - 1)
 
             isHeadSection = index == playerSegmentCount - 1
 
             fillColor = None
 
-            if self.__level.isPlayerDead:
+            if level.isPlayerDead:
                 if index >= playerSegmentCount - self.__playerDeadSections:
                     fillColor = app.engine.style.playerDeadColor
                 else:
@@ -100,7 +101,7 @@ class PyInGameScreenEngine:
             else:
                 fillColor = app.engine.style.playerBodyColor
 
-            drawLocation = pygame.Rect(self.getLocationRect(app, pyscreen, playerLocation))
+            drawLocation = pygame.Rect(self.getLocationRect(level, pyscreen, playerLocation))
 
             if not isHeadSection:
                 drawLocation.inflate_ip(-2, -2)
@@ -111,7 +112,7 @@ class PyInGameScreenEngine:
 
                 animationRunTime = animationSegment1RunTime + animationSegment2RunTime
 
-                animationStartTime = self.__level.playerLastTimeAte
+                animationStartTime = level.playerLastTimeAte
                 animationEndTime = animationStartTime + animationRunTime
 
                 if now >= animationStartTime and now <= animationEndTime:
@@ -131,8 +132,8 @@ class PyInGameScreenEngine:
 
                     drawLocation.inflate_ip(increase, increase)
 
-            if self.__level.isPlayerDead:
-                timeSinceDead = now - self.__level.playerDeathTime
+            if level.isPlayerDead:
+                timeSinceDead = now - level.playerDeathTime
                 increaseRatio = 4 / 200
                 increase = timeSinceDead * increaseRatio
 
@@ -149,8 +150,10 @@ class PyInGameScreenEngine:
 
                 pyscreen.blit(text, textRect)
 
-    def drawFood(self, app, pyscreen):
-        drawLocation = self.getLocationRect(app, pyscreen, self.__level.foodLocation)
+    def drawFood(self, app: App, pyscreen):
+        level = app.session.level
+
+        drawLocation = self.getLocationRect(level, pyscreen, level.foodLocation)
 
         drawRect = pygame.Rect(drawLocation)
 
@@ -158,9 +161,11 @@ class PyInGameScreenEngine:
 
         pygame.draw.rect(pyscreen, app.engine.style.foodColor, drawRect, 0)
 
-    def drawScore(self, app, pyscreen):
+    def drawScore(self, app: App, pyscreen):
+        level = app.session.level
+
         screenrect = pyscreen.get_rect()
-        playRectangle = self.getPlayRectangle(pyscreen)
+        playRectangle = self.getPlayRectangle(level, pyscreen)
 
         rightSideBarWidth = screenrect.right - playRectangle.right
 
@@ -176,14 +181,14 @@ class PyInGameScreenEngine:
 
         pyscreen.blit(scoreHeaderText, scoreHeaderTextLocation)
 
-        scoreText = self.__scoreFont.render(str(self.__level.score), True, app.engine.style.inGameScoreTextColor)
+        scoreText = self.__scoreFont.render(str(level.score), True, app.engine.style.inGameScoreTextColor)
 
         scoreTextLocation = scoreText.get_rect()
         scoreTextLocation.topright = scoreHeaderTextLocation.bottomright
 
         pyscreen.blit(scoreText, scoreTextLocation)
 
-        string = f"{self.__level.playerSpeed} + {self.__level.playerSpeedBoost:0.2f} t/s"
+        string = f"{level.playerSpeed} + {level.playerSpeedBoost:0.2f} t/s"
         text = self.__statsFont.render(string, True, app.engine.style.inGameStatsTextColor)
 
         textRect = text.get_rect()
@@ -193,32 +198,32 @@ class PyInGameScreenEngine:
 
         pyscreen.blit(text, textRect)
 
-    def getTileSize(self, pyscreen):
+    def getTileSize(self, level: Level, pyscreen):
         size = pyscreen.get_size()
 
         # padding
         size = (size[0] - 10, size[1] - 10)
 
-        tileWidth = size[0] / self.__level.width
-        tileHeight = size[1] / self.__level.height
+        tileWidth = size[0] / level.width
+        tileHeight = size[1] / level.height
 
         tileWidth = int(tileWidth)
         tileHeight = int(tileHeight)
 
         return min(tileWidth, tileHeight)
 
-    def getPlayRectangle(self, pyscreen):
-        tileSize = self.getTileSize(pyscreen)
+    def getPlayRectangle(self, level: Level, pyscreen):
+        tileSize = self.getTileSize(level, pyscreen)
 
-        rect = pygame.Rect(0, 0, self.__level.width * tileSize, self.__level.height * tileSize)
+        rect = pygame.Rect(0, 0, level.width * tileSize, level.height * tileSize)
 
         rect.center = pyscreen.get_rect().center
 
         return rect
     
-    def getLocationRect(self, app, pyscreen, location):
-        playRect = self.getPlayRectangle(pyscreen)
-        tileSize = self.getTileSize(pyscreen)
+    def getLocationRect(self, level: Level, pyscreen, location):
+        playRect = self.getPlayRectangle(level, pyscreen)
+        tileSize = self.getTileSize(level, pyscreen)
 
         x = (location[0] * tileSize) + playRect.x
         y = (location[1] * tileSize) + playRect.y

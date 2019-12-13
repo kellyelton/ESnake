@@ -1,6 +1,6 @@
 import enum
 import logging
-from . import AppScreen, Debug
+from . import AppScreen, Level, Debug, session
 from .update import versiontuple
 
 class App:
@@ -12,13 +12,17 @@ class App:
         self.logger.info(value)
         self.__state = value
 
+    @property
+    def session(self) -> session.Session: return self.__session
+
     def __init__(self, engine, config, exelocation, debug : Debug):
         self.logger = logging.getLogger(__name__)
         self.name = "ESnake"
-        self.version = versiontuple("0.1.16.0")
+        self.version = versiontuple("0.1.15.0")
         self.exelocation = exelocation
         self.__state = ""
-        self.screen = AppScreen.Loading
+        self.__session: session.Session = None
+        self.screen: AppScreen = AppScreen.Loading
         self.config = config
         self.engine = engine
         self.debug : Debug = debug
@@ -32,6 +36,16 @@ class App:
             self.engine.run(self)
         finally:
             self.state = "stopped"
+
+    def newGame(self, level: Level = None):
+        if level == None:
+            level = Level.default()
+
+        self.__session = session.Session()
+
+        self.__session.level = level
+
+        self.screen = AppScreen.InGame
 
     def stop(self):
         self.state = "stopping"

@@ -1,6 +1,6 @@
 import pygame
 import logging
-from ESnake import loadStyle, hasFunction, AppScreen, Level
+from ESnake import loadStyle, hasFunction, App, AppScreen, Level
 from . import PyLoadingScreenEngine, PyInGameScreenEngine, PyPostGameScreenEngine
 
 class PyGameEngine:
@@ -83,18 +83,14 @@ class PyGameEngine:
 
         self.screenEngine = self.createScreenEngine(app, app.screen)
 
-    def createScreenEngine(self, app, appScreen: AppScreen):
+    def createScreenEngine(self, app: App, appScreen: AppScreen):
         if app.screen == AppScreen.Loading:
             return PyLoadingScreenEngine(app)
         elif app.screen == AppScreen.InGame:
-            level = Level.default()
-
-            return PyInGameScreenEngine(app, level)
+            return PyInGameScreenEngine(app)
         elif app.screen == AppScreen.PostGame:
             previousEngine = self._screenEngine
 
-            level = previousEngine.level
-
-            return PyPostGameScreenEngine(app, level)
+            return PyPostGameScreenEngine(app)
         else:
             raise Exception("Not Implemented")
