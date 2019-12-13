@@ -9,13 +9,9 @@ class InvalidState(BaseException): pass
 
 class AlreadyStarted(BaseException): pass
 
-Initialized = "initialized"
-Started = "started"
-
 class Session:
     def __init__(self):
         self.__level: Level = None
-        self.__state: str = Initialized
         self.__log = logging.getLogger(__name__)
 
     @property
@@ -23,21 +19,12 @@ class Session:
 
     @level.setter
     def level(self, value):
-        if value == None: raise InvalidState(f"None is not a valid Level")
+        if value == None: raise NoLevel(f"None is not a valid Level")
         if not self.__level == value:
             self.__level = value 
 
     @property
-    def State(self) -> str: return self.__state
-
-    @State.setter
-    def State(self, value : State):
-        if value == None: raise InvalidState("None is not a valid State")
-        if self.__state == value: raise InvalidState(f"Cannot transition State from {self.__state} to {value}")
-        self.__state = value
-
-    @property
-    def Snakes(self) -> []: self.__snakes.values()
+    def snakes(self) -> []: self.__snakes.values()
 
     def addSnake(self, snake: Snake):
         if snake == None: raise Exception("snake must be set")
