@@ -166,5 +166,7 @@ if __name__=='__main__':
     except Exception as exception:
         message = str(exception)
         logger.fatal(f"Unhandled Exception: {message}", exc_info=True)
+
+        if isDebugging: raise
     finally:
         logger.info("END")
