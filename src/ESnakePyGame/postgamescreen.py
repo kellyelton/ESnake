@@ -9,7 +9,7 @@ class PyPostGameScreenEngine:
     def update(self, app): pass
 
     def __init__(self, app: App):
-        self.logger = logging.getLogger(__name__)
+        self._log = logging.getLogger(__name__)
         self.__gameOverFont = pygame.font.Font(app.engine.style.postGameGameOverFont, app.engine.style.postGameGameOverFontSize)
         self.__scoreFont = pygame.font.Font(app.engine.style.postGameScoreFont, app.engine.style.postGameScoreFontSize)
         self.__instructionsFont = pygame.font.Font(app.engine.style.postGameInstructionsFont, app.engine.style.postGameInstructionsFontSize)
@@ -20,10 +20,10 @@ class PyPostGameScreenEngine:
     def processEvent(self, app: App, event):
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_ESCAPE:
-                self.logger.debug("pressed esc")
+                self._log.debug("pressed esc")
                 app.stop()
             elif event.key == pygame.K_RETURN:
-                self.logger.debug("pressed enter")
+                self._log.debug("pressed enter")
                 app.newGame()
 
     def start(self, app: App, time: int):
