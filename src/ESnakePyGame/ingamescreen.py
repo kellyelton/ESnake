@@ -1,6 +1,9 @@
 import pygame
 import logging
-from ESnake import Direction, AppScreen, App, Level
+from ESnake.direction import Direction
+from ESnake.app import App
+from ESnake.appscreen import AppScreen
+from ESnake.level import Level
 
 class PyInGameScreenEngine:
     def __init__(self, app: App):
@@ -11,22 +14,32 @@ class PyInGameScreenEngine:
         self.__playerDeadSections: int = 0
         self.__lastDeadSectionAdded: int = 0
 
+    def start(self, app: App, time: int):
+        level: Level = app.session.level
+
+        level.player.spawn(time)
+
     def processEvent(self, app: App, event):
-        level = app.session.level
+        time = pygame.time.get_ticks()
+        level: Level = app.session.level
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
                 self.logger.debug("Requested Direction changed to Left");
-                level.requestedPlayerDirection = Direction.left
+                if level.player.state == "spawned": level.player.start(time)
+                level.player.nextDirection = Direction.left
             elif event.key == pygame.K_RIGHT:
                 self.logger.debug("Requested Direction changed to Right");
-                level.requestedPlayerDirection = Direction.right
+                if level.player.state == "spawned": level.player.start(time)
+                level.player.nextDirection = Direction.right
             elif event.key == pygame.K_UP:
                 self.logger.debug("Requested Direction changed to Up");
-                level.requestedPlayerDirection = Direction.up
+                if level.player.state == "spawned": level.player.start(time)
+                level.player.nextDirection = Direction.up
             elif event.key == pygame.K_DOWN:
                 self.logger.debug("Requested Direction changed to Down");
-                level.requestedPlayerDirection = Direction.down
+                if level.player.state == "spawned": level.player.start(time)
+                level.player.nextDirection = Direction.down
             elif event.key == pygame.K_ESCAPE:
                 self.logger.debug("esc pressed, switch to post game");
                 app.screen = AppScreen.PostGame
@@ -66,9 +79,9 @@ class PyInGameScreenEngine:
         pygame.draw.rect(pyscreen, borderColor, bottomRect, 0)
 
     def drawPlayer(self, app: App, pyscreen, now):
-        level = app.session.level
+        level: Level = app.session.level
 
-        if level.isPlayerDead:
+        if level.player.state == "dead":
             text = self.__scoreFont.render("RIP", True, app.engine.style.playerDeadColor)
 
             textRect = text.get_rect()
@@ -81,17 +94,17 @@ class PyInGameScreenEngine:
                 self.__lastDeadSectionAdded = now
                 self.__playerDeadSections += 1
 
-        timeSinceLastAte = now - level.playerLastTimeAte
+        timeSinceLastAte = now - level.player.lastEatTime
 
-        playerSegmentCount = len(level.playerLocations)
-        for index, playerLocation in enumerate(reversed(level.playerLocations)):
+        playerSegmentCount = len(level.player.segments)
+        for index, playerLocation in enumerate(reversed(level.player.segments)):
             realIndex = (playerSegmentCount - index - 1)
 
             isHeadSection = index == playerSegmentCount - 1
 
             fillColor = None
 
-            if level.isPlayerDead:
+            if level.player.state == "dead":
                 if index >= playerSegmentCount - self.__playerDeadSections:
                     fillColor = app.engine.style.playerDeadColor
                 else:
@@ -112,7 +125,7 @@ class PyInGameScreenEngine:
 
                 animationRunTime = animationSegment1RunTime + animationSegment2RunTime
 
-                animationStartTime = level.playerLastTimeAte
+                animationStartTime = level.player.lastEatTime
                 animationEndTime = animationStartTime + animationRunTime
 
                 if now >= animationStartTime and now <= animationEndTime:
@@ -132,8 +145,8 @@ class PyInGameScreenEngine:
 
                     drawLocation.inflate_ip(increase, increase)
 
-            if level.isPlayerDead:
-                timeSinceDead = now - level.playerDeathTime
+            if level.player.state == "dead":
+                timeSinceDead = now - level.player.deathTime
                 increaseRatio = 4 / 200
                 increase = timeSinceDead * increaseRatio
 
@@ -142,7 +155,7 @@ class PyInGameScreenEngine:
             pygame.draw.rect(pyscreen, fillColor, drawLocation, 0)
 
             if app.debug.playerLocation:
-                string = f"{playerLocation[0]}, {playerLocation[1]}"
+                string = f"{playerLocation.x}, {playerLocation.y}"
                 text = self.__debugFont.render(string, True, (255, 0, 0), (255, 255, 255))
 
                 textRect = text.get_rect()
@@ -181,14 +194,14 @@ class PyInGameScreenEngine:
 
         pyscreen.blit(scoreHeaderText, scoreHeaderTextLocation)
 
-        scoreText = self.__scoreFont.render(str(level.score), True, app.engine.style.inGameScoreTextColor)
+        scoreText = self.__scoreFont.render(str(level.player.score), True, app.engine.style.inGameScoreTextColor)
 
         scoreTextLocation = scoreText.get_rect()
         scoreTextLocation.topright = scoreHeaderTextLocation.bottomright
 
         pyscreen.blit(scoreText, scoreTextLocation)
 
-        string = f"{level.playerSpeed} + {level.playerSpeedBoost:0.2f} t/s"
+        string = f"{level.player.speed} + {level.player.speedBoost:0.2f} t/s"
         text = self.__statsFont.render(string, True, app.engine.style.inGameStatsTextColor)
 
         textRect = text.get_rect()
@@ -225,7 +238,7 @@ class PyInGameScreenEngine:
         playRect = self.getPlayRectangle(level, pyscreen)
         tileSize = self.getTileSize(level, pyscreen)
 
-        x = (location[0] * tileSize) + playRect.x
-        y = (location[1] * tileSize) + playRect.y
+        x = (location.x * tileSize) + playRect.x
+        y = (location.y * tileSize) + playRect.y
 
         return (x, y, tileSize, tileSize)

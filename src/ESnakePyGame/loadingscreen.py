@@ -1,5 +1,7 @@
 import pygame
-from ESnake import App, AppScreen, update
+from ESnake.app import App
+from ESnake.appscreen import AppScreen
+from ESnake.update import Updater
 
 class PyLoadingScreenEngine:
     def __init__(self, app: App):
@@ -9,7 +11,7 @@ class PyLoadingScreenEngine:
         self.__lastUpdateDotsTime = 0
         self.__loadingStartTime = 0
         self.__state = "initializing"
-        self.__updater = update.Updater(app.version, app.exelocation)
+        self.__updater = Updater(app.version, app.exelocation)
         self.status = "Loading"
         self.minorstatus = ""
 

@@ -1,7 +1,10 @@
 import enum
 import logging
-from . import AppScreen, Level, Debug, session
-from .update import versiontuple
+from ESnake.appscreen import AppScreen
+from ESnake.level import Level
+from ESnake.debug import Debug
+from ESnake.update import versiontuple
+import ESnake.session as session
 
 class App:
     @property

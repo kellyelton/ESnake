@@ -1,6 +1,9 @@
 import pygame
 import logging
-from ESnake import AppScreen, getHighScore, App, Level
+from ESnake.app import App
+from ESnake.appscreen import AppScreen
+from ESnake.highscore import getHighScore, updateHighScore
+from ESnake.level import Level
 
 class PyPostGameScreenEngine:
     def update(self, app): pass
@@ -10,6 +13,9 @@ class PyPostGameScreenEngine:
         self.__gameOverFont = pygame.font.Font(app.engine.style.postGameGameOverFont, app.engine.style.postGameGameOverFontSize)
         self.__scoreFont = pygame.font.Font(app.engine.style.postGameScoreFont, app.engine.style.postGameScoreFontSize)
         self.__instructionsFont = pygame.font.Font(app.engine.style.postGameInstructionsFont, app.engine.style.postGameInstructionsFontSize)
+        self.__oldHighScore: int = 0
+        self.__playerScore: int = 0
+        self.__isHighScore: bool = False
 
     def processEvent(self, app: App, event):
         if event.type == pygame.KEYUP:
@@ -19,6 +25,17 @@ class PyPostGameScreenEngine:
             elif event.key == pygame.K_RETURN:
                 self.logger.debug("pressed enter")
                 app.newGame()
+
+    def start(self, app: App, time: int):
+        self.__oldHighScore = getHighScore(app.config)
+
+        self.__playerScore = app.session.level.player.score
+
+        storedHighScore = updateHighScore(app.config, self.__playerScore)
+
+        if storedHighScore:
+            self._log.debug(f"Got a new high score of {self.__playerScore}, surpassing old high score of {self.__oldHighScore}")
+            self.__isHighScore = True
 
     def draw(self, app, pyscreen):
         pyscreen.fill(app.engine.style.postGameBackgroundColor)
@@ -37,14 +54,12 @@ class PyPostGameScreenEngine:
         pyscreen.blit(gameOverText, gameOverTextRect)
 
     def drawScoreText(self, app: App, pyscreen):
-        level = app.session.level
-
-        if level.isHighScore:
-            scoreString = "New High Score: " + str(level.score)
+        if self.__isHighScore:
+            scoreString = "New High Score: " + str(self.__playerScore)
+            highScore = self.__playerScore
         else:
-            scoreString = "Score: " + str(level.score)
-
-        highScore = getHighScore(app.config)
+            scoreString = "Score: " + str(self.__playerScore)
+            highScore = self.__oldHighScore
 
         scoreText = self.__scoreFont.render(scoreString, True, app.engine.style.postGameScoreColor)
 

@@ -1,7 +1,13 @@
 import pygame
 import logging
-from ESnake import loadStyle, hasFunction, App, AppScreen, Level
-from . import PyLoadingScreenEngine, PyInGameScreenEngine, PyPostGameScreenEngine
+from ESnake.app import App
+from ESnake.appscreen import AppScreen
+from ESnake.style import loadStyle
+from ESnake.helpers import hasFunction
+from ESnake.level import Level
+from ESnakePyGame.ingamescreen import PyInGameScreenEngine
+from ESnakePyGame.loadingscreen import PyLoadingScreenEngine 
+from ESnakePyGame.postgamescreen import PyPostGameScreenEngine
 
 class PyGameEngine:
     def __init__(self):
@@ -82,6 +88,10 @@ class PyGameEngine:
         self._previousAppScreen = app.screen
 
         self.screenEngine = self.createScreenEngine(app, app.screen)
+        
+        if hasFunction(self.screenEngine, "start"):
+            time = pygame.time.get_ticks()
+            self.screenEngine.start(app, time)
 
     def createScreenEngine(self, app: App, appScreen: AppScreen):
         if app.screen == AppScreen.Loading:

@@ -1,6 +1,7 @@
 import logging
 import enum
-from . import Level, Snake
+from ESnake.level import Level
+from ESnake.snake import Snake
 
 class NoLevel(BaseException): pass
 
@@ -13,9 +14,8 @@ Started = "started"
 
 class Session:
     def __init__(self):
-        self.__level = None
+        self.__level: Level = None
         self.__state: str = Initialized
-        self.__snakes = {}
         self.__log = logging.getLogger(__name__)
 
     @property

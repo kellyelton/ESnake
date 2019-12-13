@@ -13,9 +13,11 @@ import yaml
 import shutil
 import subprocess
 import time
-from ESnake import *
-from ESnakePyGame import *
 from pprint import pformat
+from ESnake.config import Config
+from ESnake.debug import Debug
+from ESnakePyGame.engine import PyGameEngine
+from ESnake.app import App
 
 def loadConfig(logger: logging.Logger) -> Config: 
     def parseBool(boolString: str) -> bool:
