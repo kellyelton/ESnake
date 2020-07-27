@@ -47,6 +47,7 @@ class PyInGameScreenEngine:
         self.drawBorder(app, pyscreen)
         self.drawFood(app, pyscreen)
         self.drawPlayer(app, pyscreen, now)
+        self.drawBots(app, pyscreen, now)
         self.drawScore(app, pyscreen)
         
     def drawBorder(self, app, pyscreen):
@@ -133,6 +134,92 @@ class PyInGameScreenEngine:
 
             if self.__level.player.isDead:
                 timeSinceDead = now - self.__level.player.deathTime
+                increaseRatio = 4 / 200
+                increase = timeSinceDead * increaseRatio
+
+                drawLocation.inflate_ip(increase, increase)
+
+            pygame.draw.rect(pyscreen, fillColor, drawLocation, 0)
+
+            if app.debug.playerLocation:
+                string = f"{playerLocation[0]}, {playerLocation[1]}"
+                text = self.__debugFont.render(string, True, (255, 0, 0), (255, 255, 255))
+
+                textRect = text.get_rect()
+                textRect.topleft = (drawLocation[0], drawLocation[1])
+
+                pyscreen.blit(text, textRect)
+
+    def drawBots(self, app, pyscreen, now):
+        for bot in self.__level.bots:
+            self.drawBot(app, pyscreen, now, bot)
+
+    def drawBot(self, app, pyscreen, now, bot):
+        if bot.isDead:
+
+            textRect = text.get_rect()
+            textRect.center = pyscreen.get_rect().center
+
+            pyscreen.blit(text, textRect)
+
+            timeSinceLastDeadSegment = now - self.__lastDeadSectionAdded
+            if timeSinceLastDeadSegment >= 100:
+                self.__lastDeadSectionAdded = now
+                self.__playerDeadSections += 1
+
+        timeSinceLastAte = now - bot.lastTimeAte
+
+        playerSegmentCount = len(bot.segments)
+        for index, playerLocation in enumerate(reversed(bot.segments)):
+            realIndex = (playerSegmentCount - index - 1)
+
+            isHeadSection = index == playerSegmentCount - 1
+
+            fillColor = None
+
+            if bot.isDead:
+                if index >= playerSegmentCount - self.__playerDeadSections:
+                    fillColor = app.engine.style.playerDeadColor
+                else:
+                    fillColor = app.engine.style.playerBodyColor
+            elif isHeadSection:
+                fillColor = app.engine.style.playerHeadColor
+            else:
+                fillColor = app.engine.style.playerBodyColor
+
+            drawLocation = pygame.Rect(self.getLocationRect(app, pyscreen, playerLocation))
+
+            if not isHeadSection:
+                drawLocation.inflate_ip(-2, -2)
+
+            if realIndex == 0:
+                animationSegment1RunTime = 100
+                animationSegment2RunTime = 100
+
+                animationRunTime = animationSegment1RunTime + animationSegment2RunTime
+
+                animationStartTime = bot.lastTimeAte
+                animationEndTime = animationStartTime + animationRunTime
+
+                if now >= animationStartTime and now <= animationEndTime:
+                    animationSegment1StartTime = animationStartTime
+                    animationSegment2StartTime = animationSegment1StartTime + animationSegment1RunTime
+
+                    increase = 0
+
+                    if now >= animationSegment1StartTime and now < animationSegment2StartTime:
+                        # Animation Section 1
+                        increaseRatio = 3 / animationSegment1RunTime
+                        increase = (now - animationStartTime) * increaseRatio
+                    elif now >= animationSegment2StartTime and now < animationEndTime:
+                        # Animation Section 2
+                        increaseRatio = 2.5 / animationSegment2RunTime
+                        increase = (animationStartTime - now) * increaseRatio
+
+                    drawLocation.inflate_ip(increase, increase)
+
+            if bot.isDead:
+                timeSinceDead = now - bot.deathTime
                 increaseRatio = 4 / 200
                 increase = timeSinceDead * increaseRatio
 

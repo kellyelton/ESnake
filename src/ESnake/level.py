@@ -12,8 +12,10 @@ class Level:
         self.logger = logging.getLogger(__name__)
         self.width = width
         self.height = height
-        self.player = Snake(speed, self.center)
         self.foodLocation = None # Needs to exist before we set it to random
+        self.player = Snake(speed, self.center)
+        self.bots = [Snake(speed, self.randomEmptyLocation)]
+
         self.foodLocation = self.randomEmptyLocation
         self.startTime: int = None
     
@@ -51,12 +53,20 @@ class Level:
                     self.logger.debug("Got a high score")
 
     def getContents(self, location):
-        if location == self.foodLocation:
-            return "food"
-        
-        for segment in self.player.segments:
-            if location == segment:
-                return "player"
+        if hasattr(self, "foodLocation"):
+            if location == self.foodLocation:
+                return "food"
+
+        if hasattr(self, "player"):
+            for segment in self.player.segments:
+                if location == segment:
+                    return "player"
+
+        if hasattr(self, "bots"):
+            for bot in self.bots:
+                for segment in bot.segments:
+                    if location == segment:
+                        return "bot"
         
         if location[0] <= 0: return "wall"
         if location[0] >= self.width - 1: return "wall"
@@ -67,12 +77,20 @@ class Level:
         return None
 
     def isEmpty(self, location):
-        if location == self.foodLocation:
-            return False
-
-        for segment in self.player.segments:
-            if location == segment:
+        if hasattr(self, "foodLocation"):
+            if location == self.foodLocation:
                 return False
+
+        if hasattr(self, "player"):
+            for segment in self.player.segments:
+                if location == segment:
+                    return False
+
+        if hasattr(self, "bots"):
+            for bot in self.bots:
+                for segment in bot.segments:
+                    if location == segment:
+                        return False
 
         if location[0] <= 0 or location[0] >= self.width - 1:
             return False
