@@ -20,16 +20,16 @@ class PyInGameScreenEngine:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
                 self.logger.debug("Requested Direction changed to Left");
-                self.__level.requestedPlayerDirection = Direction.left
+                self.__level.player.requestedDirection = Direction.left
             elif event.key == pygame.K_RIGHT:
                 self.logger.debug("Requested Direction changed to Right");
-                self.__level.requestedPlayerDirection = Direction.right
+                self.__level.player.requestedDirection = Direction.right
             elif event.key == pygame.K_UP:
                 self.logger.debug("Requested Direction changed to Up");
-                self.__level.requestedPlayerDirection = Direction.up
+                self.__level.player.requestedDirection = Direction.up
             elif event.key == pygame.K_DOWN:
                 self.logger.debug("Requested Direction changed to Down");
-                self.__level.requestedPlayerDirection = Direction.down
+                self.__level.player.requestedDirection = Direction.down
             elif event.key == pygame.K_ESCAPE:
                 self.logger.debug("esc pressed, switch to post game");
                 app.screen = AppScreen.PostGame
@@ -67,7 +67,7 @@ class PyInGameScreenEngine:
         pygame.draw.rect(pyscreen, borderColor, bottomRect, 0)
 
     def drawPlayer(self, app, pyscreen, now):
-        if self.__level.isPlayerDead:
+        if self.__level.player.isDead:
             text = self.__scoreFont.render("RIP", True, app.engine.style.playerDeadColor)
 
             textRect = text.get_rect()
@@ -80,17 +80,17 @@ class PyInGameScreenEngine:
                 self.__lastDeadSectionAdded = now
                 self.__playerDeadSections += 1
 
-        timeSinceLastAte = now - self.__level.playerLastTimeAte
+        timeSinceLastAte = now - self.__level.player.lastTimeAte
 
-        playerSegmentCount = len(self.__level.playerLocations)
-        for index, playerLocation in enumerate(reversed(self.__level.playerLocations)):
+        playerSegmentCount = len(self.__level.player.segments)
+        for index, playerLocation in enumerate(reversed(self.__level.player.segments)):
             realIndex = (playerSegmentCount - index - 1)
 
             isHeadSection = index == playerSegmentCount - 1
 
             fillColor = None
 
-            if self.__level.isPlayerDead:
+            if self.__level.player.isDead:
                 if index >= playerSegmentCount - self.__playerDeadSections:
                     fillColor = app.engine.style.playerDeadColor
                 else:
@@ -111,7 +111,7 @@ class PyInGameScreenEngine:
 
                 animationRunTime = animationSegment1RunTime + animationSegment2RunTime
 
-                animationStartTime = self.__level.playerLastTimeAte
+                animationStartTime = self.__level.player.lastTimeAte
                 animationEndTime = animationStartTime + animationRunTime
 
                 if now >= animationStartTime and now <= animationEndTime:
@@ -131,8 +131,8 @@ class PyInGameScreenEngine:
 
                     drawLocation.inflate_ip(increase, increase)
 
-            if self.__level.isPlayerDead:
-                timeSinceDead = now - self.__level.playerDeathTime
+            if self.__level.player.isDead:
+                timeSinceDead = now - self.__level.player.deathTime
                 increaseRatio = 4 / 200
                 increase = timeSinceDead * increaseRatio
 
@@ -176,14 +176,14 @@ class PyInGameScreenEngine:
 
         pyscreen.blit(scoreHeaderText, scoreHeaderTextLocation)
 
-        scoreText = self.__scoreFont.render(str(self.__level.score), True, app.engine.style.inGameScoreTextColor)
+        scoreText = self.__scoreFont.render(str(self.__level.player.score), True, app.engine.style.inGameScoreTextColor)
 
         scoreTextLocation = scoreText.get_rect()
         scoreTextLocation.topright = scoreHeaderTextLocation.bottomright
 
         pyscreen.blit(scoreText, scoreTextLocation)
 
-        string = f"{self.__level.playerSpeed} + {self.__level.playerSpeedBoost:0.2f} t/s"
+        string = f"{self.__level.player.speed} + {self.__level.player.speedBoost:0.2f} t/s"
         text = self.__statsFont.render(string, True, app.engine.style.inGameStatsTextColor)
 
         textRect = text.get_rect()

@@ -5,5 +5,6 @@ from .config import Config
 from .helpers import hasFunction
 from .highscore import getHighScore, updateHighScore
 from .direction import Direction
+from .snake import Snake
 from .level import Level
 from .style import loadStyle, Style
