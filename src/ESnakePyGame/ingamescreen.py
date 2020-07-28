@@ -156,12 +156,6 @@ class PyInGameScreenEngine:
 
     def drawBot(self, app, pyscreen, now, bot):
         if bot.isDead:
-
-            textRect = text.get_rect()
-            textRect.center = pyscreen.get_rect().center
-
-            pyscreen.blit(text, textRect)
-
             timeSinceLastDeadSegment = now - self.__lastDeadSectionAdded
             if timeSinceLastDeadSegment >= 100:
                 self.__lastDeadSectionAdded = now
@@ -237,13 +231,14 @@ class PyInGameScreenEngine:
                 pyscreen.blit(text, textRect)
 
     def drawFood(self, app, pyscreen):
-        drawLocation = self.getLocationRect(app, pyscreen, self.__level.foodLocation)
+        for food in self.__level.foods:
+            drawLocation = self.getLocationRect(app, pyscreen, food.location)
 
-        drawRect = pygame.Rect(drawLocation)
+            drawRect = pygame.Rect(drawLocation)
 
-        drawRect = drawRect.inflate(-8, -8)
+            drawRect = drawRect.inflate(-8, -8)
 
-        pygame.draw.rect(pyscreen, app.engine.style.foodColor, drawRect, 0)
+            pygame.draw.rect(pyscreen, app.engine.style.foodColor, drawRect, 0)
 
     def drawScore(self, app, pyscreen):
         screenrect = pyscreen.get_rect()
