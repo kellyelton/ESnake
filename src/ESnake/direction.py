@@ -11,6 +11,45 @@ class Direction:
             return Direction.up
         else: raise Exception(f"Invalid direction: {self.string}")
 
+    @property
+    def relativeRight(self):
+        if self.string == "left":
+            return Direction.up
+        elif self.string == "right":
+            return Direction.down
+        elif self.string == "up":
+            return Direction.right
+        elif self.string == "down":
+            return Direction.left
+        else: raise Exception(f"Invalid direction: {self.string}")
+
+    @property
+    def relativeLeft(self):
+        if self.string == "left":
+            return Direction.down
+        elif self.string == "right":
+            return Direction.up
+        elif self.string == "up":
+            return Direction.left
+        elif self.string == "down":
+            return Direction.right
+        else: raise Exception(f"Invalid direction: {self.string}")
+
+    def toVector(self):
+        x = 0
+        if self.string == "left":
+            x = -1
+        elif self.string == "right":
+            x = 1
+
+        y = 0
+        if self.string == "up":
+            y = -1
+        elif self.string == "down":
+            y = 1
+
+        return (x, y)
+
     def __init__(self, direction):
         if isinstance(direction, str):
             direction = direction.casefold()
