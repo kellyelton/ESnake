@@ -10,14 +10,18 @@ class Snake(GameObject):
         self.logger = logging.getLogger(__name__)
         self.speed = speed
         self.score = 0
+        self.foodScore = 0
+        self.energy = 1
         self.startTime = None
         self.direction: Direction = None
+        self.previousRequestedDirection: Direction = None
         self.requestedDirection: Direction = None
         self.segments = [location]
         self.lastTimeMoved = 0
         self.lastTimeAte = 0
         self.deathTime = 0
         self.isDead = False
+        self.tilesTouched = set()
         self.controller = controller
     def update(self, app, time, level):
         if not self.isDead:
@@ -29,7 +33,7 @@ class Snake(GameObject):
 
             runSeconds = (time - self.startTime) / 1000
             self.speedBoost = runSeconds / 12
-            adjustedSpeed = self.speed + self.speedBoost
+            adjustedSpeed = self.speed# + self.speedBoost
 
             minDelay = 1000 / adjustedSpeed
 
@@ -42,17 +46,30 @@ class Snake(GameObject):
                 self.move(app, time, level)
 
     def move(self, app, time, level):
-        newDirection = self.requestedDirection
-        self.requestedDirection = None
+        self.tilesTouched.add(self.segments[0])
 
-        if newDirection != None and self.direction != newDirection:
-            # Don't allow reversing if we have a tail
-            if len(self.segments) > 1:
-                if self.direction.opposite == newDirection:
-                    #self.logger.debug(f"Can't move {newDirection}, while player is moving {self.playerDirection}")
-                    newDirection = self.direction # cancel out change
+        self.energy = max(0, self.energy - 0.02)
 
-            self.direction = newDirection
+        if self.energy == 0 and "player" not in self.tags:
+            self.kill(app, time, level, "ran out of energy")
+            return
+
+        # Change course
+        if self.requestedDirection != None:
+            newDirection = self.previousRequestedDirection = self.requestedDirection
+            self.requestedDirection = None
+
+            # Switch directions only if we're not already going that direction
+            if self.direction != newDirection:
+                # Don't allow reversing if we have a tail
+                if len(self.segments) > 1:
+                    if self.direction.opposite == newDirection:
+                        #self.logger.debug(f"Can't move {newDirection}, while player is moving {self.playerDirection}")
+                        newDirection = self.direction # cancel out change
+
+                self.direction = newDirection
+        else:
+            self.previousRequestedDirection = self.direction
 
         if self.direction == None: return
 
@@ -69,30 +86,51 @@ class Snake(GameObject):
         elif self.direction == Direction.down:
             newHead = (oldHead[0], oldHead[1] + 1)
 
+        if level.isOutsideWall(newHead): return
+
         newHeadContents = level.getContents(newHead)
 
         if(newHeadContents != None):
             if "food" in newHeadContents.tags:
-                self.score += 1
-                self.logger.debug(f"eating food. new score {self.score}")
+                self.foodScore += 1
+                self.logger.info(f"eating food. new food score {self.foodScore}")
                 self.lastTimeAte = time
+                self.energy = min(1, self.energy + 0.1)
                 removeTail = False
                 level.moveFood(newHeadContents)
             elif "snake" in newHeadContents.tags:
                 if newHeadContents == self:
-                    self.logger.debug(f"{self} ran into itself")
+                    self.logger.info(f"{self} ran into itself")
                 else:
-                    self.logger.debug(f"{self} ran into {newHeadContents}")
-                    newHeadContents.isDead = True
-                    newHeadContents.deathTime = time
-                self.isDead = True
-                self.deathTime = time
+                    self.logger.info(f"{self} ran into {newHeadContents}")
+                    if newHead == newHeadContents.segments[0]: # hit other snakes head
+                        newHeadContents.kill(app, time, level, self)
+                    else: # hit other snakes tail
+                        self.logger.info(f"{newHeadContents} scored a kill on {self}")
+
+                self.kill(app, time, level, newHeadContents)
             elif "wall" in newHeadContents.tags:
-                self.logger.debug(f"ran into a wall")
-                self.isDead = True
-                self.deathTime = time
+                self.kill(app, time, level, newHeadContents)
 
         self.segments.insert(0, newHead)
 
         if removeTail:
             self.segments.pop()
+    
+    def kill(self, app, time, level, murderer):
+        if self.isDead: return
+
+        if self == level.player: return #don't kill player while we're debugging ai
+
+        self.logger.debug(f"{self} killed: {murderer}.")
+
+        self.tileTouchCount = len(self.tilesTouched)
+        self.tilesTouched.clear()
+        self.tilesTouched = None
+        self.isDead = True
+        self.deathTime = time
+        score = self.foodScore * 100
+        score += (self.tileTouchCount / (level.width * level.height)) * 1000 # Score for touching lots of tiles
+        if self.startTime != None:
+            score += score * ((self.deathTime - self.startTime) / 20000)
+        self.score = int(score)

@@ -13,9 +13,48 @@ class Level:
         self.logger = logging.getLogger(__name__)
         self.width = width
         self.height = height
-        self.foods = [Food(self.randomEmptyLocation)]
+        self.foods = []
+        self.player = None
+        self.bots = []
+        self.foods = [
+            Food(self.randomEmptyLocation),
+            Food(self.randomEmptyLocation),
+            Food(self.randomEmptyLocation),
+            Food(self.randomEmptyLocation),
+            Food(self.randomEmptyLocation),
+            Food(self.randomEmptyLocation),
+            Food(self.randomEmptyLocation),
+            Food(self.randomEmptyLocation),
+            Food(self.randomEmptyLocation),
+            Food(self.randomEmptyLocation),
+            Food(self.randomEmptyLocation),
+            Food(self.randomEmptyLocation),
+            Food(self.randomEmptyLocation),
+            Food(self.randomEmptyLocation),
+            Food(self.randomEmptyLocation),
+            Food(self.randomEmptyLocation),
+            Food(self.randomEmptyLocation),
+            Food(self.randomEmptyLocation),
+            Food(self.randomEmptyLocation),
+            Food(self.randomEmptyLocation),
+            Food(self.randomEmptyLocation),
+            Food(self.randomEmptyLocation),
+            Food(self.randomEmptyLocation),
+            Food(self.randomEmptyLocation),
+            Food(self.randomEmptyLocation),
+            Food(self.randomEmptyLocation),
+            Food(self.randomEmptyLocation),
+            Food(self.randomEmptyLocation),
+        ]
         self.player = Snake(speed, self.center, ["player"])
+        self.bestBot = None
         self.bots = [
+            Snake(speed, self.randomEmptyLocation, ["bot"], Dylan()),
+            Snake(speed, self.randomEmptyLocation, ["bot"], Dylan()),
+            Snake(speed, self.randomEmptyLocation, ["bot"], Dylan()),
+            Snake(speed, self.randomEmptyLocation, ["bot"], Dylan()),
+            Snake(speed, self.randomEmptyLocation, ["bot"], Dylan()),
+            Snake(speed, self.randomEmptyLocation, ["bot"], Dylan()),
             Snake(speed, self.randomEmptyLocation, ["bot"], Dylan()),
             Snake(speed, self.randomEmptyLocation, ["bot"], Dylan()),
             Snake(speed, self.randomEmptyLocation, ["bot"], Dylan()),
@@ -64,27 +103,36 @@ class Level:
             if bot.isDead:
                 msSincePlayerDied = time - bot.deathTime
 
-                if msSincePlayerDied >= 3000:
+                if msSincePlayerDied >= 1000:
                     self.logger.debug("done with death delay")
-                    self.bots.append(Snake(bot.speed, self.randomEmptyLocation, ["bot"], Dylan()))
+
+                    if self.bestBot == None or bot.score > self.bestBot.score:
+                        bestScore = "none"
+                        if self.bestBot != None:
+                            bestScore = self.bestBot.score
+                        self.logger.info(f"Bot got new high score {bot.score} > {bestScore}")
+                        self.bestBot = bot
+
+                    newController = Dylan(self.bestBot.controller)
+                    newBot = Snake(bot.speed, self.randomEmptyLocation, ["bot"], newController)
+
+                    self.bots.append(newBot)
                     self.bots.remove(bot)
 
     def getContents(self, location):
-        if hasattr(self, "foods"):
-            for food in self.foods:
-                if location == food.location:
-                    return food
+        for food in self.foods:
+            if location == food.location:
+                return food
 
-        if hasattr(self, "player"):
+        if self.player != None:
             for segment in self.player.segments:
                 if location == segment:
                     return self.player
 
-        if hasattr(self, "bots"):
-            for bot in self.bots:
-                for segment in bot.segments:
-                    if location == segment:
-                        return bot
+        for bot in self.bots:
+            for segment in bot.segments:
+                if location == segment:
+                    return bot
         
         if location[0] <= 0: return Wall(location)
         if location[0] >= self.width - 1: return Wall(location)
@@ -93,29 +141,19 @@ class Level:
         if location[1] >= self.height - 1: return Wall(location)
 
         return None
+    
+    def isOutsideWall(self, location):
+        if location[0] < 0: return True
+        if location[0] > self.width - 1: return True
+
+        if location[1] < 0: return True
+        if location[1] > self.height - 1: return True
+
+        return False
 
     def isEmpty(self, location):
-        if hasattr(self, "foodLocation"):
-            if location == self.foodLocation:
-                return False
-
-        if hasattr(self, "player"):
-            for segment in self.player.segments:
-                if location == segment:
-                    return False
-
-        if hasattr(self, "bots"):
-            for bot in self.bots:
-                for segment in bot.segments:
-                    if location == segment:
-                        return False
-
-        if location[0] <= 0 or location[0] >= self.width - 1:
-            return False
-        if location[1] <= 0 or location[1] >= self.height - 1:
-            return False 
-
-        return True
+        content = self.getContents(location)
+        return content == None
 
     def moveFood(self, food):
         food.location = self.randomEmptyLocation

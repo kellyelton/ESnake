@@ -23,8 +23,11 @@ class Style:
         self.inGameStatsFontSize = 15
         self.inGameStatsFont = self.getResourcePath("Fonts/Alata-Regular.ttf")
         self.playerHeadColor = (108, 28, 206)
+        self.playerEnergyBarColor = (200, 0, 0)
         self.playerBodyColor = (49, 13, 99)
         self.playerDeadColor = (138, 3, 3)
+        self.botHeadColor = (28, 206, 108)
+        self.botBodyColor = (9, 67, 35)
         self.foodColor = (150, 150, 150)
 
         self.postGameBackgroundColor = (50, 0, 0)
