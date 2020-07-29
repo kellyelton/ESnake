@@ -1,11 +1,12 @@
 import pygame
 import logging
+import cProfile
 from ESnake import Direction, AppScreen, App, Level
 
 class PyInGameScreenEngine:
     def __init__(self, app: App, level: Level):
         self.logger = logging.getLogger(__name__)
-        self.__debugFont = pygame.font.SysFont("Lucida Console", 14)
+        self.__debugFont = pygame.font.SysFont("Lucida Console", 8)
         self.__scoreFont = pygame.font.Font(app.engine.style.inGameScoreFont, app.engine.style.inGameScoreFontSize)
         self.__statsFont = pygame.font.Font(app.engine.style.inGameStatsFont, app.engine.style.inGameStatsFontSize)
         #TODO: Make this self.level
@@ -37,6 +38,9 @@ class PyInGameScreenEngine:
     def update(self, app):
         now = pygame.time.get_ticks()
 
+        #cProfile.run('self.__level.update(app, now)')
+        #level = self.__level
+        #cProfile.runctx('level.update(app, now)', globals(), locals())
         self.__level.update(app, now)
 
     def draw(self, app, pyscreen):
@@ -89,6 +93,8 @@ class PyInGameScreenEngine:
 
             isHeadSection = index == playerSegmentCount - 1
 
+            drawLocation = pygame.Rect(self.getLocationRect(app, pyscreen, playerLocation))
+
             fillColor = None
 
             if self.__level.player.isDead:
@@ -98,10 +104,15 @@ class PyInGameScreenEngine:
                     fillColor = app.engine.style.playerBodyColor
             elif isHeadSection:
                 fillColor = app.engine.style.playerHeadColor
+                player = self.__level.player
+                if player.previousRequestedDirection != player.direction:
+                    fillColor = (184, 92, 0)
+                    if player.direction == Direction.left or player.direction == Direction.right:
+                        drawLocation.inflate_ip(-5, 0)
+                    elif player.direction == Direction.up or player.direction == Direction.down:
+                        drawLocation.inflate_ip(0, -5)
             else:
-                fillColor = app.engine.style.playerBodyColor
-
-            drawLocation = pygame.Rect(self.getLocationRect(app, pyscreen, playerLocation))
+                fillColor = app.engine.style.playerBodyColor 
 
             if not isHeadSection:
                 drawLocation.inflate_ip(-2, -2)
@@ -156,10 +167,17 @@ class PyInGameScreenEngine:
 
     def drawBot(self, app, pyscreen, now, bot):
         if bot.isDead:
-            timeSinceLastDeadSegment = now - self.__lastDeadSectionAdded
-            if timeSinceLastDeadSegment >= 100:
-                self.__lastDeadSectionAdded = now
-                self.__playerDeadSections += 1
+            # draw bot score
+            string = f"{bot.score}"
+            text = self.__debugFont.render(string, True, (255, 0, 0), (50, 0, 0))
+
+            drawLocation = pygame.Rect(self.getLocationRect(app, pyscreen, bot.segments[0]))
+
+            textRect = text.get_rect()
+            textRect.topleft = (drawLocation[0], drawLocation[1])
+
+            pyscreen.blit(text, textRect)
+            return
 
         timeSinceLastAte = now - bot.lastTimeAte
 
@@ -169,19 +187,20 @@ class PyInGameScreenEngine:
 
             isHeadSection = index == playerSegmentCount - 1
 
+            drawLocation = pygame.Rect(self.getLocationRect(app, pyscreen, playerLocation))
+
             fillColor = None
 
-            if bot.isDead:
-                if index >= playerSegmentCount - self.__playerDeadSections:
-                    fillColor = app.engine.style.playerDeadColor
-                else:
-                    fillColor = app.engine.style.playerBodyColor
-            elif isHeadSection:
-                fillColor = app.engine.style.playerHeadColor
+            if isHeadSection:
+                fillColor = app.engine.style.botHeadColor
+                if bot.previousRequestedDirection != bot.direction:
+                    fillColor = (184, 92, 0)
+                    if bot.direction == Direction.left or bot.direction == Direction.right:
+                        drawLocation.inflate_ip(-5, 0)
+                    elif bot.direction == Direction.up or bot.direction == Direction.down:
+                        drawLocation.inflate_ip(0, -5)
             else:
-                fillColor = app.engine.style.playerBodyColor
-
-            drawLocation = pygame.Rect(self.getLocationRect(app, pyscreen, playerLocation))
+                fillColor = app.engine.style.botBodyColor
 
             if not isHeadSection:
                 drawLocation.inflate_ip(-2, -2)
@@ -212,23 +231,14 @@ class PyInGameScreenEngine:
 
                     drawLocation.inflate_ip(increase, increase)
 
-            if bot.isDead:
-                timeSinceDead = now - bot.deathTime
-                increaseRatio = 4 / 200
-                increase = timeSinceDead * increaseRatio
-
-                drawLocation.inflate_ip(increase, increase)
-
             pygame.draw.rect(pyscreen, fillColor, drawLocation, 0)
 
-            if app.debug.playerLocation:
-                string = f"{playerLocation[0]}, {playerLocation[1]}"
-                text = self.__debugFont.render(string, True, (255, 0, 0), (255, 255, 255))
+        # draw energy bar
+        fillColor = app.engine.style.playerEnergyBarColor
+        drawLocation[3] = drawLocation[3] * 0.10
+        drawLocation[2] = drawLocation[2] * bot.energy # energy is a number between 0 and 1
+        pygame.draw.rect(pyscreen, fillColor, drawLocation, 0)
 
-                textRect = text.get_rect()
-                textRect.topleft = (drawLocation[0], drawLocation[1])
-
-                pyscreen.blit(text, textRect)
 
     def drawFood(self, app, pyscreen):
         for food in self.__level.foods:
@@ -265,11 +275,21 @@ class PyInGameScreenEngine:
 
         pyscreen.blit(scoreText, scoreTextLocation)
 
+        bestBotScore = 0
+        if self.__level.bestBot != None:
+            bestBotScore = int(self.__level.bestBot.score)
+        botscoreText = self.__scoreFont.render(str(bestBotScore), True, app.engine.style.inGameScoreTextColor)
+
+        botscoreTextLocation = botscoreText.get_rect()
+        botscoreTextLocation.topright = scoreTextLocation.bottomright
+
+        pyscreen.blit(botscoreText, botscoreTextLocation)
+
         string = f"{self.__level.player.speed} + {self.__level.player.speedBoost:0.2f} t/s"
         text = self.__statsFont.render(string, True, app.engine.style.inGameStatsTextColor)
 
         textRect = text.get_rect()
-        textRect.topright = scoreTextLocation.bottomright
+        textRect.topright = botscoreTextLocation.bottomright
 
         textRect.top += 5
 
