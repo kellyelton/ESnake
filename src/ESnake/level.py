@@ -1,5 +1,6 @@
 import random
 import logging
+import numpy as np
 from random import randint
 from . import updateHighScore, AppScreen, Snake, Food, Wall
 from .controllers import Dylan
@@ -16,6 +17,7 @@ class Level:
         self.foods = []
         self.player = None
         self.bots = []
+        self.occupiedLocations = None
         self.foods = [
             Food(self.randomEmptyLocation),
             Food(self.randomEmptyLocation),
@@ -88,6 +90,9 @@ class Level:
     
     def update(self, app, time):
         self.player.update(app, time, self)
+
+        self.refreshOccupiedLocations()
+        
         if self.player.isDead:
             msSincePlayerDied = time - self.player.deathTime
 
@@ -100,6 +105,9 @@ class Level:
 
         for bot in self.bots:
             bot.update(app, time, self)
+
+            self.refreshOccupiedLocations()
+
             if bot.isDead:
                 msSincePlayerDied = time - bot.deathTime
 
@@ -119,28 +127,62 @@ class Level:
                     self.bots.append(newBot)
                     self.bots.remove(bot)
 
-    def getContents(self, location):
+                    self.refreshOccupiedLocations()
+
+    def refreshOccupiedLocations(self):
+        if self.occupiedLocations is None:
+            self.occupiedLocations = np.empty(shape=(self.height,self.width),dtype='object')
+        else:
+            self.occupiedLocations.fill(None)
+
         for food in self.foods:
-            if location == food.location:
-                return food
+            self.occupiedLocations[food.location[0]][food.location[1]] = food
 
         if self.player != None:
             for segment in self.player.segments:
-                if location == segment:
-                    return self.player
+                self.occupiedLocations[segment[0]][segment[1]] = self.player
 
         for bot in self.bots:
             for segment in bot.segments:
-                if location == segment:
-                    return bot
-        
-        if location[0] <= 0: return Wall(location)
-        if location[0] >= self.width - 1: return Wall(location)
+                self.occupiedLocations[segment[0]][segment[1]] = bot
 
-        if location[1] <= 0: return Wall(location)
-        if location[1] >= self.height - 1: return Wall(location)
+        for x in range(self.width):
+            self.occupiedLocations[0][x] = Wall((x, 0))
+            self.occupiedLocations[self.height - 1][x] = Wall((x, self.height - 1))
 
-        return None
+        for y in range(self.height):
+            self.occupiedLocations[y][0] = Wall((0, y))
+            self.occupiedLocations[y][self.width - 1] = Wall((self.width - 1, y))
+
+    def getContents(self, location):
+        if self.isOutsideWall(location): return None
+
+        if self.occupiedLocations is None:
+            if location[0] <= 0: return Wall(location)
+            if location[0] >= self.width - 1: return Wall(location)
+
+            if location[1] <= 0: return Wall(location)
+            if location[1] >= self.height - 1: return Wall(location)
+
+            for food in self.foods:
+                if location == food.location:
+                    return food
+
+            if self.player != None:
+                for segment in self.player.segments:
+                    if location == segment:
+                        return self.player
+
+            for bot in self.bots:
+                for segment in bot.segments:
+                    if location == segment:
+                        return bot
+
+            return None
+        else:
+            contents = self.occupiedLocations[location[0]][location[1]]
+
+            return contents
     
     def isOutsideWall(self, location):
         if location[0] < 0: return True

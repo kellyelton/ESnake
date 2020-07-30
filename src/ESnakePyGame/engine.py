@@ -1,5 +1,6 @@
 import pygame
 import logging
+import cProfile
 from ESnake import loadStyle, hasFunction, AppScreen, Level
 from . import PyLoadingScreenEngine, PyInGameScreenEngine, PyPostGameScreenEngine
 
@@ -49,7 +50,9 @@ class PyGameEngine:
             while app.state == "running":
                 self.configureScreenEngine(app)
                 self.processEvents(app)
-                self.screenEngine.update(app)
+                engine = self.screenEngine
+                #cProfile.runctx('engine.update(app)', globals(), locals())
+                engine.update(app)
                 self.draw(app, pyscreen)
 
                 # max fps 60

@@ -2,7 +2,7 @@ import logging
 import random
 import numpy as np
 
-from .. import Direction
+from .. import Direction, Food, Wall, Snake
 
 class Dylan:
     viewRadius = 5
@@ -85,13 +85,13 @@ class Dylan:
             return 0
         elif contents is snake:
             return 1
-        elif "food" in contents.tags:
+        elif isinstance(contents, Food):
             return 0.80
-        elif "player" in contents.tags:
+        elif contents is level.player:
             return 0.60
-        elif "bot" in contents.tags:
+        elif isinstance(contents, Snake):
             return 0.40
-        elif "wall" in contents.tags:
+        elif isinstance(contents, Wall):
             return 0.20
         else: raise "invalid contents"
 

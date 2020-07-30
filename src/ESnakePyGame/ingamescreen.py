@@ -1,6 +1,5 @@
 import pygame
 import logging
-import cProfile
 from ESnake import Direction, AppScreen, App, Level
 
 class PyInGameScreenEngine:
@@ -38,9 +37,6 @@ class PyInGameScreenEngine:
     def update(self, app):
         now = pygame.time.get_ticks()
 
-        #cProfile.run('self.__level.update(app, now)')
-        #level = self.__level
-        #cProfile.runctx('level.update(app, now)', globals(), locals())
         self.__level.update(app, now)
 
     def draw(self, app, pyscreen):
