@@ -84,12 +84,33 @@ class PyInGameScreenEngine:
         timeSinceLastAte = now - self.__level.player.lastTimeAte
 
         playerSegmentCount = len(self.__level.player.segments)
-        for index, playerLocation in enumerate(reversed(self.__level.player.segments)):
+        for index, segment in enumerate(reversed(self.__level.player.segments)):
+            playerLocation = segment.location
+
             realIndex = (playerSegmentCount - index - 1)
 
             isHeadSection = index == playerSegmentCount - 1
 
             drawLocation = pygame.Rect(self.getLocationRect(app, pyscreen, playerLocation))
+
+            msPerTile = self.__level.player.speed
+
+            timeSinceLastMove = now - self.__level.player.lastTimeMoved + self.__level.timeOffset
+
+            percentToMove = min(1, timeSinceLastMove / msPerTile)
+
+            if segment.direction == Direction.left:
+                xOffset = drawLocation.width * percentToMove
+                drawLocation[0] -= xOffset
+            elif segment.direction == Direction.right:
+                xOffset = drawLocation.width * percentToMove
+                drawLocation[0] += xOffset
+            elif segment.direction == Direction.up:
+                yOffset = drawLocation.height * percentToMove
+                drawLocation[1] -= yOffset
+            elif segment.direction == Direction.down:
+                yOffset = drawLocation.height * percentToMove
+                drawLocation[1] += yOffset
 
             fillColor = None
 
@@ -167,7 +188,7 @@ class PyInGameScreenEngine:
             string = f"{bot.score}"
             text = self.__debugFont.render(string, True, (255, 0, 0), (50, 0, 0))
 
-            drawLocation = pygame.Rect(self.getLocationRect(app, pyscreen, bot.segments[0]))
+            drawLocation = pygame.Rect(self.getLocationRect(app, pyscreen, bot.segments[0].location))
 
             textRect = text.get_rect()
             textRect.topleft = (drawLocation[0], drawLocation[1])
@@ -178,7 +199,8 @@ class PyInGameScreenEngine:
         timeSinceLastAte = now - bot.lastTimeAte
 
         playerSegmentCount = len(bot.segments)
-        for index, playerLocation in enumerate(reversed(bot.segments)):
+        for index, segment in enumerate(reversed(bot.segments)):
+            playerLocation = segment.location
             realIndex = (playerSegmentCount - index - 1)
 
             isHeadSection = index == playerSegmentCount - 1

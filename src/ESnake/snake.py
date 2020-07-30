@@ -1,5 +1,5 @@
 import logging
-from . import Direction, GameObject
+from . import Direction, GameObject, SnakeSegment
 
 class Snake(GameObject):
     def __init__(self, speed, location, tags, controller = None):
@@ -16,13 +16,13 @@ class Snake(GameObject):
         self.direction: Direction = None
         self.previousRequestedDirection: Direction = None
         self.requestedDirection: Direction = None
-        self.segments = [location]
         self.lastTimeMoved = 0
         self.lastTimeAte = 0
         self.deathTime = 0
         self.isDead = False
         self.tilesTouched = set()
         self.controller = controller
+        self.segments = [SnakeSegment(self, location, None)]
     def update(self, app, time, level):
         if not self.isDead:
             if self.startTime == None:
@@ -35,18 +35,16 @@ class Snake(GameObject):
             self.speedBoost = runSeconds / 12
             adjustedSpeed = self.speed# + self.speedBoost
 
-            minDelay = 1000 / adjustedSpeed
-
             msSinceLastMoved = time - self.lastTimeMoved
 
-            if msSinceLastMoved >= minDelay:
+            if msSinceLastMoved >= adjustedSpeed:
                 self.lastTimeMoved = time
                 if not self.controller == None:
                     self.controller.move(app, time, level, self)
                 self.move(app, time, level)
 
     def move(self, app, time, level):
-        self.tilesTouched.add(self.segments[0])
+        self.tilesTouched.add(self.segments[0].location)
 
         self.energy = max(0, self.energy - 0.02)
 
@@ -73,7 +71,7 @@ class Snake(GameObject):
 
         if self.direction == None: return
 
-        oldHead = self.segments[0]
+        oldHead = self.segments[0].location
         newHead = oldHead
         removeTail = True
 
@@ -103,7 +101,7 @@ class Snake(GameObject):
                     self.logger.info(f"{self} ran into itself")
                 else:
                     self.logger.info(f"{self} ran into {newHeadContents}")
-                    if newHead == newHeadContents.segments[0]: # hit other snakes head
+                    if newHead == newHeadContents.segments[0].location: # hit other snakes head
                         newHeadContents.kill(app, time, level, self)
                     else: # hit other snakes tail
                         self.logger.info(f"{newHeadContents} scored a kill on {self}")
@@ -112,10 +110,23 @@ class Snake(GameObject):
             elif "wall" in newHeadContents.tags:
                 self.kill(app, time, level, newHeadContents)
 
-        self.segments.insert(0, newHead)
+        newSegment = SnakeSegment(self, newHead, self.direction)
+
+        self.segments[0].isHead = False
+        self.segments.insert(0, newSegment)
 
         if removeTail:
             self.segments.pop()
+
+        previousSegmentDirection = self.direction
+        for segment in self.segments:
+            if segment.direction == previousSegmentDirection: continue
+
+            tpd = segment.direction
+
+            segment.direction = previousSegmentDirection
+
+            previousSegmentDirection = tpd
     
     def kill(self, app, time, level, murderer):
         if self.isDead: return

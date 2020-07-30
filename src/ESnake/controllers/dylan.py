@@ -49,7 +49,7 @@ class Dylan:
             snake.energy
         ]
 
-        center = snake.segments[0]
+        center = snake.segments[0].location
 
         startX = center[0] - self.viewRadius
         startY = center[1] - self.viewRadius

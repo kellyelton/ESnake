@@ -8,7 +8,7 @@ from .controllers import Dylan
 class Level:
     @staticmethod
     def default():
-        return Level(40, 40, 8)
+        return Level(40, 40, 200)
 
     def __init__(self, width, height, speed):
         self.logger = logging.getLogger(__name__)
@@ -146,11 +146,11 @@ class Level:
 
         if self.player != None:
             for segment in self.player.segments:
-                self.occupiedLocations[segment[0]][segment[1]] = self.player
+                self.occupiedLocations[segment.location[0]][segment.location[1]] = self.player
 
         for bot in self.bots:
             for segment in bot.segments:
-                self.occupiedLocations[segment[0]][segment[1]] = bot
+                self.occupiedLocations[segment.location[0]][segment.location[1]] = bot
 
         for x in range(self.width):
             self.occupiedLocations[0][x] = Wall((x, 0))
@@ -176,11 +176,11 @@ class Level:
 
             if self.player != None:
                 for segment in self.player.segments:
-                    if location == segment:
+                    if location == segment.location:
                         return self.player
 
             for bot in self.bots:
-                for segment in bot.segments:
+                for segment in bot.segments.location:
                     if location == segment:
                         return bot
 

@@ -6,6 +6,7 @@ from .helpers import hasFunction
 from .highscore import getHighScore, updateHighScore
 from .direction import Direction
 from .gameobject import GameObject
+from .snakesegment import SnakeSegment
 from .snake import Snake
 from .food import Food
 from .wall import Wall
