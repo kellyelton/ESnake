@@ -18,6 +18,8 @@ class Level:
         self.player = None
         self.bots = []
         self.occupiedLocations = None
+        self.timeOffset = 0
+        self.lastUpdateTime = 0
         self.foods = [
             Food(self.randomEmptyLocation),
             Food(self.randomEmptyLocation),
@@ -89,6 +91,10 @@ class Level:
         return location
     
     def update(self, app, time):
+        time = time + self.timeOffset
+
+        self.lastUpdateTime = time
+
         self.player.update(app, time, self)
 
         self.refreshOccupiedLocations()

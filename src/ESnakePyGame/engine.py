@@ -1,7 +1,9 @@
 import pygame
 import logging
 import cProfile
-from ESnake import loadStyle, hasFunction, AppScreen, Level
+import pickle # 🥒
+import os
+from ESnake import loadStyle, hasFunction, AppScreen, Level, App
 from . import PyLoadingScreenEngine, PyInGameScreenEngine, PyPostGameScreenEngine
 
 class PyGameEngine:
@@ -63,6 +65,9 @@ class PyGameEngine:
     def processEvents(self, app):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                if app.screen == AppScreen.InGame:
+                    self.saveGame(app)
+
                 app.stop()
             elif self._screenEngine == None:
                 self.logger.debug(f"skipping event {event}");
@@ -90,7 +95,10 @@ class PyGameEngine:
         if app.screen == AppScreen.Loading:
             return PyLoadingScreenEngine(app)
         elif app.screen == AppScreen.InGame:
-            level = Level.default()
+            level = self.loadSaveGame()
+            
+            if level is None:
+                level = Level.default()
 
             return PyInGameScreenEngine(app, level)
         elif app.screen == AppScreen.PostGame:
@@ -98,6 +106,53 @@ class PyGameEngine:
 
             level = previousEngine.level
 
+            self.deleteSaveGame()
+
             return PyPostGameScreenEngine(app, level)
         else:
             raise Exception("Not Implemented")
+    
+    def saveGame(self, app: App):
+        if not isinstance(self._screenEngine, PyInGameScreenEngine):
+            self.logger.warn(f"Not in game, can't save game")
+            return
+
+        inGameEngine: PyInGameScreenEngine = self._screenEngine
+
+        # 🥒
+        bytes = pickle.dumps(inGameEngine.level)
+
+        with open('autosave', 'wb') as file:
+            file.write(bytes)
+    
+    def loadSaveGame(self):
+        try:
+            if not os.path.isfile("autosave"): return None
+
+            saveBytes = None
+            with open('autosave', 'rb') as file:
+                saveBytes = file.read()
+
+            # 🥒
+            level = pickle.loads(saveBytes)
+
+            level.timeOffset = level.lastUpdateTime
+
+            return level
+        except FileNotFoundError:
+            pass
+        except:
+            try:
+                os.remove("autosave")
+            except:
+                pass
+
+        return None
+    
+    def deleteSaveGame(self):
+        try:
+            if not os.path.isfile("autosave"): return
+
+            os.remove("autosave")
+        except FileNotFoundError:
+            pass
