@@ -2,15 +2,15 @@ import random
 import logging
 import numpy as np
 from random import randint
-from . import updateHighScore, AppScreen, Snake, Food, Wall
+from . import updateHighScore, AppScreen, Snake, Food, Wall, GameObject
 from .controllers import Dylan
 
 class Level:
     @staticmethod
     def default():
-        return Level(40, 40, 200)
+        return Level(40, 40, 200, 30, 12)
 
-    def __init__(self, width, height, speed):
+    def __init__(self, width, height, speed, foodCount, botCount):
         self.logger = logging.getLogger(__name__)
         self.width = width
         self.height = height
@@ -19,54 +19,28 @@ class Level:
         self.bots = []
         self.occupiedLocations = None
         self.timeOffset = 0
+        self.initialFoodCount = foodCount
+        self.initialBotCount = botCount
+        self.locations = [[None for x in range(width)] for y in range(height)]
         self.lastUpdateTime = 0
-        self.foods = [
-            Food(self.randomEmptyLocation),
-            Food(self.randomEmptyLocation),
-            Food(self.randomEmptyLocation),
-            Food(self.randomEmptyLocation),
-            Food(self.randomEmptyLocation),
-            Food(self.randomEmptyLocation),
-            Food(self.randomEmptyLocation),
-            Food(self.randomEmptyLocation),
-            Food(self.randomEmptyLocation),
-            Food(self.randomEmptyLocation),
-            Food(self.randomEmptyLocation),
-            Food(self.randomEmptyLocation),
-            Food(self.randomEmptyLocation),
-            Food(self.randomEmptyLocation),
-            Food(self.randomEmptyLocation),
-            Food(self.randomEmptyLocation),
-            Food(self.randomEmptyLocation),
-            Food(self.randomEmptyLocation),
-            Food(self.randomEmptyLocation),
-            Food(self.randomEmptyLocation),
-            Food(self.randomEmptyLocation),
-            Food(self.randomEmptyLocation),
-            Food(self.randomEmptyLocation),
-            Food(self.randomEmptyLocation),
-            Food(self.randomEmptyLocation),
-            Food(self.randomEmptyLocation),
-            Food(self.randomEmptyLocation),
-            Food(self.randomEmptyLocation),
-        ]
+
+        for i in range(self.initialFoodCount):
+            location = self.randomEmptyLocation
+            food = Food(location)
+            self.updateLocation(food)
+            self.foods.append(food)
+
         self.player = Snake(speed, self.center, ["player"])
+        self.updateLocation(self.player)
+
         self.bestBot = None
-        self.bots = [
-            Snake(speed, self.randomEmptyLocation, ["bot"], Dylan()),
-            Snake(speed, self.randomEmptyLocation, ["bot"], Dylan()),
-            Snake(speed, self.randomEmptyLocation, ["bot"], Dylan()),
-            Snake(speed, self.randomEmptyLocation, ["bot"], Dylan()),
-            Snake(speed, self.randomEmptyLocation, ["bot"], Dylan()),
-            Snake(speed, self.randomEmptyLocation, ["bot"], Dylan()),
-            Snake(speed, self.randomEmptyLocation, ["bot"], Dylan()),
-            Snake(speed, self.randomEmptyLocation, ["bot"], Dylan()),
-            Snake(speed, self.randomEmptyLocation, ["bot"], Dylan()),
-            Snake(speed, self.randomEmptyLocation, ["bot"], Dylan()),
-            Snake(speed, self.randomEmptyLocation, ["bot"], Dylan()),
-            Snake(speed, self.randomEmptyLocation, ["bot"], Dylan()),
-            Snake(speed, self.randomEmptyLocation, ["bot"], Dylan())
-        ]
+
+        self.bots = []
+        for i in range(self.initialBotCount):
+            location = self.randomEmptyLocation
+            snake = Snake(speed, location, ["bot"], Dylan())
+            self.updateLocation(snake)
+            self.bots.append(snake)
 
         self.startTime: int = None
     
@@ -84,6 +58,8 @@ class Level:
     @property
     def randomEmptyLocation(self):
         location = self.randomLocation
+        # TODO: if no empty, then check to the right, if not empty, check right again, etc until we find one.
+        # Checking random over and over is likely to cause lots of fails and random slowdowns
 
         while not self.isEmpty(location):
             location = self.randomLocation
@@ -135,6 +111,9 @@ class Level:
 
                     self.refreshOccupiedLocations()
 
+    def updateLocation(self, gameObject: GameObject):
+        pass
+
     def refreshOccupiedLocations(self):
         if self.occupiedLocations is None:
             self.occupiedLocations = np.empty(shape=(self.height,self.width),dtype='object')
@@ -180,8 +159,8 @@ class Level:
                         return self.player
 
             for bot in self.bots:
-                for segment in bot.segments.location:
-                    if location == segment:
+                for segment in bot.segments:
+                    if location == segment.location:
                         return bot
 
             return None

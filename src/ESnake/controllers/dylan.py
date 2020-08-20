@@ -5,7 +5,7 @@ import numpy as np
 from .. import Direction, Food, Wall, Snake
 
 class Dylan:
-    viewRadius = 5
+    viewRadius = 10
     def __init__(self, parent = None):
         self.logger = logging.getLogger(__name__)
 
@@ -16,7 +16,7 @@ class Dylan:
 
         if parent == None:
             self.weights0 = np.random.uniform(-1,1,size = (inputCount, layer2Count))
-            self.weights1 = np.random.uniform(-1,1,size = (layer2Count, outputCount))
+            self.weights1 = np.random.uniform(-1,1,size = (layer2Count, layer3Count))
         else:
             def clamp(num):
                 if num > 1:
@@ -29,13 +29,27 @@ class Dylan:
 
             adjustmentMax = random.random()
 
-            adjustments = np.random.uniform(-(adjustmentMax), adjustmentMax, size = (inputCount, layer2Count))
-            self.weights0 = np.add(adjustments, parent.weights0)
-            self.weights0 = np.array([clampRow(row) for row in self.weights0])
+            self.weights0 = np.empty((inputCount, layer2Count))
+            for inputNum in range(0, inputCount):
+                for layer2Num in range(0, layer2Count):
+                    adjustment = random.uniform(-adjustmentMax, adjustmentMax)
 
-            adjustments = np.random.uniform(-(adjustmentMax), adjustmentMax, size = (layer2Count, outputCount))
-            self.weights1 = np.add(adjustments, parent.weights1)
-            self.weights1 = np.array([clampRow(row) for row in self.weights1])
+                    newWeight = parent.weights0[inputNum][layer2Num]
+                    newWeight = newWeight + adjustment;
+                    newWeight = clamp(newWeight)
+
+                    self.weights0[inputNum][layer2Num] = newWeight
+
+            self.weights1 = np.empty((layer2Count, outputCount))
+            for layer2Num in range(0, layer2Count):
+                for outputNum in range(0, outputCount):
+                    adjustment = random.uniform(-adjustmentMax, adjustmentMax)
+
+                    newWeight = parent.weights1[layer2Num][outputNum]
+                    newWeight = newWeight + adjustment;
+                    newWeight = clamp(newWeight)
+
+                    self.weights1[layer2Num][outputNum] = newWeight
 
     def update(self, app, time, level, snake):
         if snake.direction == None:

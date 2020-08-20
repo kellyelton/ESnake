@@ -132,7 +132,7 @@ class PyInGameScreenEngine:
                 fillColor = app.engine.style.playerBodyColor 
 
             if not isHeadSection:
-                drawLocation.inflate_ip(-2, -2)
+                drawLocation.inflate_ip(-4, -4)
 
             if realIndex == 0:
                 animationSegment1RunTime = 100
@@ -221,33 +221,7 @@ class PyInGameScreenEngine:
                 fillColor = app.engine.style.botBodyColor
 
             if not isHeadSection:
-                drawLocation.inflate_ip(-2, -2)
-
-            if realIndex == 0:
-                animationSegment1RunTime = 100
-                animationSegment2RunTime = 100
-
-                animationRunTime = animationSegment1RunTime + animationSegment2RunTime
-
-                animationStartTime = bot.lastTimeAte
-                animationEndTime = animationStartTime + animationRunTime
-
-                if now >= animationStartTime and now <= animationEndTime:
-                    animationSegment1StartTime = animationStartTime
-                    animationSegment2StartTime = animationSegment1StartTime + animationSegment1RunTime
-
-                    increase = 0
-
-                    if now >= animationSegment1StartTime and now < animationSegment2StartTime:
-                        # Animation Section 1
-                        increaseRatio = 3 / animationSegment1RunTime
-                        increase = (now - animationStartTime) * increaseRatio
-                    elif now >= animationSegment2StartTime and now < animationEndTime:
-                        # Animation Section 2
-                        increaseRatio = 2.5 / animationSegment2RunTime
-                        increase = (animationStartTime - now) * increaseRatio
-
-                    drawLocation.inflate_ip(increase, increase)
+                drawLocation.inflate_ip(-4, -4)
 
             pygame.draw.rect(pyscreen, fillColor, drawLocation, 0)
 

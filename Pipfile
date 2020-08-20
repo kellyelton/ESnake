@@ -11,6 +11,7 @@ bump2version = "*"
 pygame = "*"
 pyyaml = "*"
 requests = "*"
+numpy = "*"
 
 [requires]
 python_version = "3.8"

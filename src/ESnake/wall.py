@@ -2,8 +2,9 @@ from . import GameObject
 
 class Wall(GameObject):
     def __init__(self, location, tags = []):
-        self.tags = tags.append("wall")
+        tempTags = tags.copy()
+        tempTags.append("wall")
 
-        super().__init__(tags)
+        super().__init__(tempTags)
 
         self.location = location

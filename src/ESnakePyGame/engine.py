@@ -58,7 +58,7 @@ class PyGameEngine:
                 self.draw(app, pyscreen)
 
                 # max fps 60
-                clock.tick(app.config.maxfps)
+                clock.tick_busy_loop(app.config.maxfps)
         finally:
             self.logger.debug("exiting run loop")
 
