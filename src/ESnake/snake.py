@@ -46,7 +46,10 @@ class Snake(GameObject):
     def move(self, app, time, level):
         self.tilesTouched.add(self.segments[0].location)
 
-        self.energy = max(0, self.energy - 0.02)
+        self.energy = max(0, self.energy - 0.002)
+
+        if self.direction != None: # consume extra energy when moving
+            self.energy = max(0, self.energy - 0.01)
 
         if self.energy == 0 and "player" not in self.tags:
             self.kill(app, time, level, "ran out of energy")
