@@ -4,64 +4,81 @@ import numpy as np
 
 from .. import Direction, Food, Wall, Snake
 
+
 class Dylan:
     viewRadius = 5
     net = None
-    def __init__(self, parent = None):
+
+    def __init__(self, parent=None):
         self.logger = logging.getLogger(__name__)
 
         inputCount = ((self.viewRadius*2)**2)+(self.viewRadius * 4)+1
-        inputCount += 3 #direction and energy
+        inputCount += 3  # direction and energy
         outputCount = 6
 
-        self.net = Net(inputCount, outputCount)
-        
-    def mutatedWeightsFromParent(self, parent):
-            def clamp(num):
-                if num > 1:
-                    return 1
-                elif num < -1:
-                    return -1
-                else: return num
-            def clampRow(weights):
-                return [clamp(weight) for weight in weights]
+        if parent is None:
+            self.net = Net(inputCount, outputCount)
+        else:
+            self.net = self.mutate(parent.net)
 
-            adjustmentMax = random.random() # maximum deviation that can occur per weight
+    def mutate(self, srcNet):
+        def clamp(num):
+            if num > 1:
+                return 1
+            elif num < -1:
+                return -1
+            else:
+                return num
 
-            layerCount = len(parent.weights)
+        def clampRow(weights):
+            return [clamp(weight) for weight in weights]
 
-            for i in range(0, layerCount):
-                layer = parent.weights[i].copy()
+        adjMax = random.random()  # maximum deviation per weight
 
-                sourceCount = len(layer)
+        srcLayerCount = len(srcNet.layers)
 
-                for sourceIndex in range(0, sourceCount):
-                    source = layer[sourceIndex]
+        nlayers = []
+        prevSrcLayer = None
+        prevNewLayer = None
+        for i in range(0, srcLayerCount):
+            srcLayer = srcNet.layers[i]
 
-                    targetCount = len(source)
+            nNeurons = []
+            for srcNeuron in srcLayer.neurons:
+                adjustment = random.uniform(-adjMax, adjMax)
+                activation = srcNeuron.activation
+                activation = activation + adjustment
+                activation = clamp(activation)
+                nNeuron = Neuron(activation)
+                nNeurons.append(nNeuron)
 
-                    for targetIndex in range(0, targetCount):
-                        adjustment = random.uniform(-adjustmentMax, adjustmentMax)
+            if prevSrcLayer is not None:
+                for i in range(0, len(prevSrcLayer.neurons)):
+                    srcNeuron = prevSrcLayer.neurons[i]
+                    ni = 0
+                    for srcSynapse in srcNeuron.synapses:
+                        adjustment = random.uniform(-adjMax, adjMax)
+                        weight = srcSynapse.weight
+                        weight = weight + adjustment
+                        weight = clamp(weight)
+                        nSynapse = Synapse(weight, nNeurons[ni])
+                        prevNewLayer.neurons[i].synapses.append(nSynapse)
+                        ni = ni + 1
 
-                        newWeight = parent.weights[i][sourceIndex][targetIndex]
-                        newWeight = newWeight + adjustment;
-                        newWeight = clamp(newWeight)
+            nLayer = Layer(nNeurons)
+            prevNewLayer = nLayer
 
-                        adjustment = random.uniform(-adjustmentMax, adjustmentMax)
+            prevSrcLayer = srcLayer
+            nlayers.append(nLayer)
 
-                        activation = parent.weights[i][sourceIndex][targetIndex][1]
-                        activation = activation + adjustment;
-                        activation = clamp(activation)
-
-                        layer[sourceIndex][targetIndex] = [newWeight, activation]
-
-                yield layer
+        newnet = Net(srcNet.inputs, srcNet.outputs, nlayers)
+        return newnet
 
     def update(self, app, time, level, snake):
         pass
 
     def move(self, app, time, level, snake):
-        if snake.direction != None:
+        if snake.direction is not None:
             direction = snake.direction.toVector()
         else:
             direction = (0, 0)
@@ -88,15 +105,15 @@ class Dylan:
 
         oChangeDirection = outputs[0]
 
-        if oChangeDirection <= 0.20: #None
+        if oChangeDirection <= 0.20:  # None
             snake.requestedDirection = None
-        elif oChangeDirection <= 0.40: #left
+        elif oChangeDirection <= 0.40:  # left
             snake.requestedDirection = Direction.left
-        elif oChangeDirection <= 0.60: #up
+        elif oChangeDirection <= 0.60:  # up
             snake.requestedDirection = Direction.up
-        elif oChangeDirection <= 0.80: #right
+        elif oChangeDirection <= 0.80:  # right
             snake.requestedDirection = Direction.right
-        elif oChangeDirection <= 1: #down
+        elif oChangeDirection <= 1:  # down
             snake.requestedDirection = Direction.down
 
     def getLevelContents(self, level, snake, x, y):
@@ -117,44 +134,48 @@ class Dylan:
             return 0.40
         elif isinstance(contents, Wall):
             return 0.20
-        else: raise "invalid contents"
+        else:
+            raise "invalid contents"
 
     def activation(self, x):
         return 1 / (1 + np.exp(-x))
+
 
 class Synapse:
     def __init__(self, weight, outputNeuron):
         self.weight = weight
         self.outputNeuron = outputNeuron
-    
+
     def stimulate(self, signal):
         def clamp(num):
             if num > 1:
                 return 1
             elif num < 0:
                 return 0
-            else: return num
+            else:
+                return num
 
         adjustedSignal = self.adjust(signal)
         adjustedSignal = clamp(adjustedSignal)
         self.outputNeuron.accumulate(adjustedSignal)
 
     def adjust(self, signal):
-        adjustment = self.weight 
+        adjustment = self.weight
 
         adjustedSignal = signal + (signal * adjustment)
         return adjustedSignal
-        #return 1 / (1 + exp(-signal))
+        # return 1 / (1 + exp(-signal))
+
 
 class Neuron:
-    def __init__(self, activation = None):
+    def __init__(self, activation=None):
         self.activation = activation
         self.synapses = []
-        if activation == None:
+        if activation is None:
             self.activation = random.uniform(0, 1)
 
         self.accumulatedSignal = float(0)
-    
+
     def attach(self, layer):
         for neuron in layer.neurons:
             # maxWeight = 1 / layer.size
@@ -162,37 +183,39 @@ class Neuron:
 
             synapse = Synapse(randomWeight, neuron)
             self.synapses.append(synapse)
-    
+
     def accumulate(self, signal):
         s = float(min(1, self.accumulatedSignal + signal))
         self.accumulatedSignal = s
-        asdf = self.accumulatedSignal
 
     def process(self):
         synapseCount = len(self.synapses)
-        if synapseCount == 0: return
+        if synapseCount == 0:
+            return
 
         if self.accumulatedSignal < self.activation:
             self.activation = min(1, self.activation + 0.01)
             return
 
         self.activation = max(0, self.activation - 0.01)
-        
+
         splitSignal = self.accumulatedSignal / synapseCount
 
         for synapse in self.synapses:
             synapse.stimulate(splitSignal)
 
+
 class Layer:
-    def __init__(self, size):
-        self.size = size
-        self.neurons = [Neuron() for i in range(0, size)]
-    
+    def __init__(self, neurons):
+        self.neurons = list(neurons)
+        self.size = len(self.neurons)
+
     def accumulate(self, inputs):
         i = 0
 
         for signal in inputs:
-            if i == self.size: break
+            if i == self.size:
+                break
 
             self.neurons[i].accumulate(signal)
 
@@ -202,12 +225,21 @@ class Layer:
         for i in range(0, self.size):
             self.neurons[i].process()
 
+    @staticmethod
+    def random(size):
+        neurons = [Neuron() for i in range(0, size)]
+        return Layer(neurons)
+
+
 class Net:
-    def __init__(self, inputs, outputs):
+    def __init__(self, inputs, outputs, layers=None):
         self.inputs = inputs
         self.outputs = outputs
-        self.layers = self.randomLayers(inputs, outputs)
-    
+        if layers is None:
+            self.layers = self.randomLayers(inputs, outputs)
+        else:
+            self.layers = layers
+
     def randomLayers(self, inputs, outputs):
         config = []
 
@@ -217,18 +249,18 @@ class Net:
             layer = None
             if i == 0:
                 layerSize = inputs
-                layer = Layer(layerSize)
+                layer = Layer.random(layerSize)
                 for neuron in layer.neurons:
                     neuron.activation = 0
 
             elif i == layerCount - 1:
                 layerSize = outputs
-                layer = Layer(layerSize)
+                layer = Layer.random(layerSize)
             else:
                 layerSize = int(random.random() * 24) + 1
-                layer = Layer(layerSize)
+                layer = Layer.random(layerSize)
 
-            if not prevLayer == None:
+            if prevLayer is not None:
                 for neuron in prevLayer.neurons:
                     neuron.attach(layer)
 
@@ -236,7 +268,7 @@ class Net:
             prevLayer = layer
 
         return config
-    
+
     def process(self, inputs):
         for layer in self.layers:
             for neuron in layer.neurons:
