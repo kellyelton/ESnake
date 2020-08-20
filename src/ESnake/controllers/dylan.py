@@ -5,19 +5,36 @@ import numpy as np
 from .. import Direction, Food, Wall, Snake
 
 class Dylan:
-    viewRadius = 10
+    viewRadius = 5
     def __init__(self, parent = None):
         self.logger = logging.getLogger(__name__)
 
+        if parent == None:
+            self.weights = list(self.createBrainFromScratch())
+        else:
+            self.weights = list(self.createBrainFromParent(parent))
+        
+    def createBrainFromScratch(self):
         inputCount = ((self.viewRadius*2)**2)+(self.viewRadius * 4)+1
         inputCount += 3 #direction and energy
-        layer2Count = 16
         outputCount = 6
 
-        if parent == None:
-            self.weights0 = np.random.uniform(-1,1,size = (inputCount, layer2Count))
-            self.weights1 = np.random.uniform(-1,1,size = (layer2Count, layer3Count))
-        else:
+        hiddenLayerSizes = [16, 16, 16, 16]
+        hiddenLayerCount = len(hiddenLayerSizes)
+
+        layerSizes = [inputCount, *hiddenLayerSizes, outputCount]
+        layerCount = hiddenLayerCount + 2
+
+        for i in range(0, layerCount - 1):
+            layerSize = layerSizes[i]
+
+            nextLayerSize = layerSizes[i + 1]
+
+            layer = np.random.uniform(-1, 1, size = (layerSize, nextLayerSize))
+
+            yield layer
+
+    def createBrainFromParent(self, parent):
             def clamp(num):
                 if num > 1:
                     return 1
@@ -27,36 +44,40 @@ class Dylan:
             def clampRow(weights):
                 return [clamp(weight) for weight in weights]
 
-            adjustmentMax = random.random()
+            adjustmentMax = random.random() # maximum deviation that can occur per weight
 
-            self.weights0 = np.empty((inputCount, layer2Count))
-            for inputNum in range(0, inputCount):
-                for layer2Num in range(0, layer2Count):
-                    adjustment = random.uniform(-adjustmentMax, adjustmentMax)
+            layerCount = len(parent.weights)
 
-                    newWeight = parent.weights0[inputNum][layer2Num]
-                    newWeight = newWeight + adjustment;
-                    newWeight = clamp(newWeight)
+            for i in range(0, layerCount):
+                layer = parent.weights[i].copy()
 
-                    self.weights0[inputNum][layer2Num] = newWeight
+                sourceCount = len(layer)
 
-            self.weights1 = np.empty((layer2Count, outputCount))
-            for layer2Num in range(0, layer2Count):
-                for outputNum in range(0, outputCount):
-                    adjustment = random.uniform(-adjustmentMax, adjustmentMax)
+                for sourceIndex in range(0, sourceCount):
+                    source = layer[sourceIndex]
 
-                    newWeight = parent.weights1[layer2Num][outputNum]
-                    newWeight = newWeight + adjustment;
-                    newWeight = clamp(newWeight)
+                    targetCount = len(source)
 
-                    self.weights1[layer2Num][outputNum] = newWeight
+                    for targetIndex in range(0, targetCount):
+                        adjustment = random.uniform(-adjustmentMax, adjustmentMax)
+
+                        newWeight = parent.weights[i][sourceIndex][targetIndex]
+                        newWeight = newWeight + adjustment;
+                        newWeight = clamp(newWeight)
+
+                        layer[sourceIndex][targetIndex] = newWeight
+
+                yield layer
 
     def update(self, app, time, level, snake):
-        if snake.direction == None:
-            snake.direction = Direction.right
+        pass
 
     def move(self, app, time, level, snake):
-        direction = snake.direction.toVector()
+        if snake.direction != None:
+            direction = snake.direction.toVector()
+        else:
+            direction = (0, 0)
+
         inputs = [
             direction[0],
             direction[1],
@@ -75,19 +96,31 @@ class Dylan:
             for x in range(startX, endX + 1):
                 inputs.append(self.getLevelContents(level, snake, x, y))
 
-        layer0 = self.activation(np.dot(inputs, self.weights0))
-        outputs = self.activation(np.dot(layer0, self.weights1))
+        outputs = self.compute(inputs)
 
         oChangeDirection = outputs[0]
 
-        if oChangeDirection <= 0.25: #left
+        if oChangeDirection <= 0.20: #None
+            snake.requestedDirection = None
+        elif oChangeDirection <= 0.40: #left
             snake.requestedDirection = Direction.left
-        elif oChangeDirection <= 0.50: #up
+        elif oChangeDirection <= 0.60: #up
             snake.requestedDirection = Direction.up
-        elif oChangeDirection <= 0.75: #right
+        elif oChangeDirection <= 0.80: #right
             snake.requestedDirection = Direction.right
         elif oChangeDirection <= 1: #down
             snake.requestedDirection = Direction.down
+
+    def compute(self, inputs):
+        layerCount = len(self.weights)
+
+        prevValues = inputs
+        for i in range(0, layerCount):
+            layer = self.weights[i]
+
+            prevValues = self.activation(np.dot(prevValues, layer))
+        
+        return prevValues
 
     def getLevelContents(self, level, snake, x, y):
         if level.isOutsideWall((x, y)):
