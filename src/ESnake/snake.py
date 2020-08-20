@@ -64,9 +64,14 @@ class Snake(GameObject):
             if self.direction != newDirection:
                 # Don't allow reversing if we have a tail
                 if len(self.segments) > 1:
-                    if self.direction.opposite == newDirection:
-                        #self.logger.debug(f"Can't move {newDirection}, while player is moving {self.playerDirection}")
-                        newDirection = self.direction # cancel out change
+                    if self.direction is not None:
+                        if self.direction.opposite == newDirection:
+                            # self.logger.debug(f"Can't move {newDirection}, while player is moving {self.playerDirection}")
+                            self.stopDirection = self.direction
+                            newDirection = None  # self.direction # cancel out change
+                    else:
+                        if self.stopDirection.opposite == newDirection:
+                            newDirection = None
 
                 self.direction = newDirection
         else:
@@ -132,9 +137,11 @@ class Snake(GameObject):
             previousSegmentDirection = tpd
     
     def kill(self, app, time, level, murderer):
-        if self.isDead: return
+        if self.isDead:
+            return
 
-        if self == level.player: return #don't kill player while we're debugging ai
+        if self == level.player:
+            return  # don't kill player while we're debugging ai
 
         self.logger.debug(f"{self} killed: {murderer}.")
 
@@ -143,8 +150,19 @@ class Snake(GameObject):
         self.tilesTouched = None
         self.isDead = True
         self.deathTime = time
-        score = self.foodScore * 100
-        score += (self.tileTouchCount / (level.width * level.height)) * 1000 # Score for touching lots of tiles
-        if self.startTime != None:
-            score += score * ((self.deathTime - self.startTime) / 20000)
+        tilePercent = (self.tileTouchCount / (level.width * level.height))
+        tileScore = tilePercent * 50000  # Score for touching lots of tiles
+
+        if self.tileTouchCount <= 5:
+            self.score = 0
+            return
+
+        foodScore = self.foodScore * 1000
+
+        ageScore = 0
+        if self.startTime is not None:
+            ageScore = (self.deathTime - self.startTime) / 200
+
+        score = foodScore + tileScore + ageScore
+
         self.score = int(score)

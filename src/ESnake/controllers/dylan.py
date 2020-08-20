@@ -25,8 +25,8 @@ class Dylan:
         def clamp(num):
             if num > 1:
                 return 1
-            elif num < -1:
-                return -1
+            elif num < 0:
+                return 0
             else:
                 return num
 
@@ -172,7 +172,7 @@ class Neuron:
         self.activation = activation
         self.synapses = []
         if activation is None:
-            self.activation = random.uniform(0, 1)
+            self.activation = random.uniform(0.2, 0.6)
 
         self.accumulatedSignal = float(0)
 
@@ -194,10 +194,10 @@ class Neuron:
             return
 
         if self.accumulatedSignal < self.activation:
-            self.activation = min(1, self.activation + 0.01)
+            self.activation = min(1, self.activation + 0.001)
             return
 
-        self.activation = max(0, self.activation - 0.01)
+        self.activation = max(0, self.activation - 0.002)
 
         splitSignal = self.accumulatedSignal / synapseCount
 
@@ -244,7 +244,7 @@ class Net:
         config = []
 
         prevLayer = None
-        layerCount = int(random.random() * 10) + 1
+        layerCount = 4  # int(random.random() * 10) + 1
         for i in range(0, layerCount):
             layer = None
             if i == 0:
@@ -257,7 +257,7 @@ class Net:
                 layerSize = outputs
                 layer = Layer.random(layerSize)
             else:
-                layerSize = int(random.random() * 24) + 1
+                layerSize = int(random.random() * 20) + 8
                 layer = Layer.random(layerSize)
 
             if prevLayer is not None:

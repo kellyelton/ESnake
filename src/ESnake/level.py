@@ -8,7 +8,7 @@ from .controllers import Dylan
 class Level:
     @staticmethod
     def default():
-        return Level(40, 40, 200, 30, 12)
+        return Level(80, 80, 100, 10, 20)
 
     def __init__(self, width, height, speed, foodCount, botCount):
         self.logger = logging.getLogger(__name__)
