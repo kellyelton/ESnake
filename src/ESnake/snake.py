@@ -20,6 +20,7 @@ class Snake(GameObject):
         self.lastTimeAte = 0
         self.deathTime = 0
         self.isDead = False
+        self.tileTouchCount = 0
         self.tilesTouched = set()
         self.controller = controller
         self.segments = [SnakeSegment(self, location, None)]
@@ -45,13 +46,41 @@ class Snake(GameObject):
 
     def move(self, app, time, level):
         self.tilesTouched.add(self.segments[0].location)
+        self.tileTouchCount = len(self.tilesTouched)
 
-        self.energy = max(0, self.energy - 0.002)
+        # TODO self.energy = max(0, self.energy - 0.002)
 
-        if self.direction != None: # consume extra energy when moving
-            self.energy = max(0, self.energy - 0.01)
+        ageCap = 60 * 3
+        maxEnergyDrain = 0.3
+        energyDrain = 0.01
 
-        if self.energy == 0 and "player" not in self.tags:
+        if self.tileTouchCount > 10:
+            maxEnergyDrain = 0.2
+        elif self.tileTouchCount > 50:
+            maxEnergyDrain = 0.1
+        elif self.tileTouchCount > 100:
+            maxEnergyDrain = 0.09
+        elif self.tileTouchCount > 500:
+            maxEnergyDrain = 0.08
+        elif self.tileTouchCount > 1000:
+            maxEnergyDrain = 0.07
+        elif self.tileTouchCount > 5000:
+            maxEnergyDrain = 0.06
+
+        secondsAlive = min(ageCap, (time - self.startTime) / 1000)  # 3 minutes old and greater, max energy drain
+        alivePercent = secondsAlive / ageCap
+
+        energyDrain = maxEnergyDrain * alivePercent
+
+        if self.direction is not None:  # consume extra energy when moving
+            movementDrain = (energyDrain * 0.75)
+            energyDrain = min(1, energyDrain + movementDrain)
+        else:
+            energyDrain = (-(energyDrain * 0.30) * (1 - alivePercent)) + 0.07
+
+        self.energy = max(0, min(1, self.energy - energyDrain))
+
+        if self.energy <= 0 and "player" not in self.tags:
             self.kill(app, time, level, "ran out of energy")
             return
 
@@ -101,7 +130,7 @@ class Snake(GameObject):
                 self.foodScore += 1
                 self.logger.info(f"eating food. new food score {self.foodScore}")
                 self.lastTimeAte = time
-                self.energy = min(1, self.energy + 0.1)
+                self.energy = min(1, self.energy + 0.35)
                 removeTail = False
                 level.moveFood(newHeadContents)
             elif "snake" in newHeadContents.tags:

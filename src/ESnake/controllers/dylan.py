@@ -22,16 +22,13 @@ class Dylan:
             self.net = self.mutate(parent.net)
 
     def mutate(self, srcNet):
-        def clamp(num):
-            if num > 1:
-                return 1
-            elif num < 0:
-                return 0
+        def clamp(num, min, max):
+            if num > max:
+                return max
+            elif num < min:
+                return min
             else:
                 return num
-
-        def clampRow(weights):
-            return [clamp(weight) for weight in weights]
 
         adjMax = random.random()  # maximum deviation per weight
 
@@ -48,7 +45,7 @@ class Dylan:
                 adjustment = random.uniform(-adjMax, adjMax)
                 activation = srcNeuron.activation
                 activation = activation + adjustment
-                activation = clamp(activation)
+                activation = clamp(activation, 0, 1)
                 nNeuron = Neuron(activation)
                 nNeurons.append(nNeuron)
 
@@ -60,7 +57,7 @@ class Dylan:
                         adjustment = random.uniform(-adjMax, adjMax)
                         weight = srcSynapse.weight
                         weight = weight + adjustment
-                        weight = clamp(weight)
+                        weight = clamp(weight, -1, 1)
                         nSynapse = Synapse(weight, nNeurons[ni])
                         prevNewLayer.neurons[i].synapses.append(nSynapse)
                         ni = ni + 1
@@ -78,14 +75,24 @@ class Dylan:
         pass
 
     def move(self, app, time, level, snake):
-        if snake.direction is not None:
-            direction = snake.direction.toVector()
-        else:
-            direction = (0, 0)
+        mov = 0
+        dir = 0
+        if snake.direction == Direction.left:
+            mov = 1
+            dir = 0.15
+        elif snake.direction == Direction.up:
+            mov = 1
+            dir = 0.35
+        elif snake.direction == Direction.right:
+            mov = 1
+            dir = 0.65
+        elif snake.direction == Direction.down:
+            mov = 1
+            dir = 0.85
 
         inputs = [
-            ((direction[0] + 1) / 2),
-            ((direction[1] + 1) / 2),
+            mov,
+            dir,
             snake.energy
         ]
 
@@ -103,22 +110,23 @@ class Dylan:
 
         outputs = self.net.process(inputs)
 
-        oChangeDirection = outputs[0]
+        oDoMove = outputs[0]
+        oDirection = outputs[1]
 
-        if oChangeDirection <= 0.20:  # None
+        if oDoMove < 0.5:
             snake.requestedDirection = None
-        elif oChangeDirection <= 0.40:  # left
+        elif oDirection <= 0.25:  # left
             snake.requestedDirection = Direction.left
-        elif oChangeDirection <= 0.60:  # up
+        elif oDirection <= 0.50:  # up
             snake.requestedDirection = Direction.up
-        elif oChangeDirection <= 0.80:  # right
+        elif oDirection <= 0.75:  # right
             snake.requestedDirection = Direction.right
-        elif oChangeDirection <= 1:  # down
+        elif oDirection <= 1:  # down
             snake.requestedDirection = Direction.down
 
     def getLevelContents(self, level, snake, x, y):
         if level.isOutsideWall((x, y)):
-            return 0.2
+            return 0.9
 
         contents = level.getContents((x, y))
 
@@ -127,13 +135,13 @@ class Dylan:
         elif contents is snake:
             return 1
         elif isinstance(contents, Food):
-            return 0.80
-        elif contents is level.player:
             return 0.60
         elif isinstance(contents, Snake):
-            return 0.40
+            return 0.70
+        elif contents is level.player:
+            return 0.80
         elif isinstance(contents, Wall):
-            return 0.20
+            return 0.90
         else:
             raise "invalid contents"
 
@@ -172,7 +180,7 @@ class Neuron:
         self.activation = activation
         self.synapses = []
         if activation is None:
-            self.activation = random.uniform(0.2, 0.6)
+            self.activation = random.uniform(0, 1)
 
         self.accumulatedSignal = float(0)
 
@@ -257,7 +265,7 @@ class Net:
                 layerSize = outputs
                 layer = Layer.random(layerSize)
             else:
-                layerSize = int(random.random() * 20) + 8
+                layerSize = int(random.random() * 16) + 8
                 layer = Layer.random(layerSize)
 
             if prevLayer is not None:
