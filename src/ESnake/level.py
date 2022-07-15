@@ -9,7 +9,7 @@ from .controllers import Dylan
 class Level:
     @staticmethod
     def default():
-        return Level(40, 40, 100, 30, 20)
+        return Level(60, 60, 30, 300, 30)
 
     def __init__(self, width, height, speed, foodCount, botCount):
         self.logger = logging.getLogger(__name__)
@@ -98,15 +98,19 @@ class Level:
                 if msSincePlayerDied >= 1000:
                     self.logger.debug("done with death delay")
 
-                    if self.bestBot == None or bot.score > self.bestBot.score:
+                    if self.bestBot is None or bot.score > self.bestBot.score:
                         bestScore = "none"
-                        if self.bestBot != None:
+                        if self.bestBot is not None:
                             bestScore = self.bestBot.score
                         self.logger.info(
                             f"Bot got new high score {bot.score} > {bestScore}")
                         self.bestBot = bot
 
-                    newController = Dylan(self.bestBot.controller)
+                    if random.random() > 0.5:
+                        newController = Dylan(self.bestBot.controller)
+                    else:
+                        newController = Dylan()
+
                     newBot = Snake(bot.speed, self.randomEmptyLocation, [
                                    "bot"], newController)
 
@@ -128,7 +132,7 @@ class Level:
         for food in self.foods:
             self.occupiedLocations[food.location[0]][food.location[1]] = food
 
-        if self.player != None:
+        if self.player is not None:
             for segment in self.player.segments:
                 self.occupiedLocations[segment.location[0]
                                        ][segment.location[1]] = self.player
@@ -167,7 +171,7 @@ class Level:
                 if location == food.location:
                     return food
 
-            if self.player != None:
+            if self.player is not None:
                 for segment in self.player.segments:
                     if location == segment.location:
                         return self.player
@@ -198,7 +202,7 @@ class Level:
 
     def isEmpty(self, location):
         content = self.getContents(location)
-        return content == None
+        return content is None
 
     def moveFood(self, food):
         food.location = self.randomEmptyLocation
