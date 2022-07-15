@@ -1,8 +1,9 @@
 import logging
 from . import Direction, GameObject, SnakeSegment
 
+
 class Snake(GameObject):
-    def __init__(self, speed, location, tags, controller = None):
+    def __init__(self, speed, location, tags, controller=None):
         tags.append("snake")
 
         super().__init__(tags)
@@ -24,23 +25,24 @@ class Snake(GameObject):
         self.tilesTouched = set()
         self.controller = controller
         self.segments = [SnakeSegment(self, location, None)]
+
     def update(self, app, time, level):
         if not self.isDead:
-            if self.startTime == None:
+            if self.startTime is None:
                 self.startTime = time
 
-            if not self.controller == None:
+            if self.controller is not None:
                 self.controller.update(app, time, level, self)
 
             runSeconds = (time - self.startTime) / 1000
             self.speedBoost = runSeconds / 12
-            adjustedSpeed = self.speed# + self.speedBoost
+            adjustedSpeed = self.speed  # + self.speedBoost
 
             msSinceLastMoved = time - self.lastTimeMoved
 
             if msSinceLastMoved >= adjustedSpeed:
                 self.lastTimeMoved = time
-                if not self.controller == None:
+                if self.controller is not None:
                     self.controller.move(app, time, level, self)
                 self.move(app, time, level)
 
@@ -50,33 +52,36 @@ class Snake(GameObject):
 
         # TODO self.energy = max(0, self.energy - 0.002)
 
-        ageCap = 60 * 3
-        maxEnergyDrain = 0.3
+        ageCap = 60 * 10
+        maxEnergyDrain = 0.5
         energyDrain = 0.01
 
-        if self.tileTouchCount > 10:
-            maxEnergyDrain = 0.2
-        elif self.tileTouchCount > 50:
-            maxEnergyDrain = 0.1
-        elif self.tileTouchCount > 100:
-            maxEnergyDrain = 0.09
-        elif self.tileTouchCount > 500:
-            maxEnergyDrain = 0.08
+        if self.tileTouchCount > 5000:
+            maxEnergyDrain = 0.06
         elif self.tileTouchCount > 1000:
             maxEnergyDrain = 0.07
-        elif self.tileTouchCount > 5000:
-            maxEnergyDrain = 0.06
+        elif self.tileTouchCount > 500:
+            maxEnergyDrain = 0.08
+        elif self.tileTouchCount > 100:
+            maxEnergyDrain = 0.09
+        elif self.tileTouchCount > 50:
+            maxEnergyDrain = 0.1
+        elif self.tileTouchCount > 10:
+            maxEnergyDrain = 0.2
+        elif self.tileTouchCount > 5:
+            maxEnergyDrain = 0.3
 
-        secondsAlive = min(ageCap, (time - self.startTime) / 1000)  # 3 minutes old and greater, max energy drain
+        # 3 minutes old and greater, max energy drain
+        secondsAlive = min(ageCap, (time - self.startTime) / 1000)
         alivePercent = secondsAlive / ageCap
 
         energyDrain = maxEnergyDrain * alivePercent
 
         if self.direction is not None:  # consume extra energy when moving
-            movementDrain = (energyDrain * 0.75)
+            movementDrain = (energyDrain * 0.5)
             energyDrain = min(1, energyDrain + movementDrain)
-        else:
-            energyDrain = (-(energyDrain * 0.30) * (1 - alivePercent)) + 0.07
+        # else:
+        #    energyDrain = ((energyDrain * 0.30) * (1 - alivePercent)) + 0.07
 
         self.energy = max(0, min(1, self.energy - energyDrain))
 
@@ -85,8 +90,10 @@ class Snake(GameObject):
             return
 
         # Change course
-        if self.requestedDirection != None:
-            newDirection = self.previousRequestedDirection = self.requestedDirection
+        if self.requestedDirection is not None:
+            newDirection \
+                = self.previousRequestedDirection \
+                = self.requestedDirection
             self.requestedDirection = None
 
             # Switch directions only if we're not already going that direction
@@ -106,7 +113,8 @@ class Snake(GameObject):
         else:
             self.previousRequestedDirection = self.direction
 
-        if self.direction == None: return
+        if self.direction is None:
+            return
 
         oldHead = self.segments[0].location
         newHead = oldHead
@@ -121,14 +129,16 @@ class Snake(GameObject):
         elif self.direction == Direction.down:
             newHead = (oldHead[0], oldHead[1] + 1)
 
-        if level.isOutsideWall(newHead): return
+        if level.isOutsideWall(newHead):
+            return
 
         newHeadContents = level.getContents(newHead)
 
-        if(newHeadContents != None):
+        if newHeadContents is not None:
             if "food" in newHeadContents.tags:
                 self.foodScore += 1
-                self.logger.info(f"eating food. new food score {self.foodScore}")
+                self.logger.info(
+                    f"eating food. new food score {self.foodScore}")
                 self.lastTimeAte = time
                 self.energy = min(1, self.energy + 0.35)
                 removeTail = False
@@ -138,14 +148,16 @@ class Snake(GameObject):
                     self.logger.info(f"{self} ran into itself")
                 else:
                     self.logger.info(f"{self} ran into {newHeadContents}")
-                    if newHead == newHeadContents.segments[0].location: # hit other snakes head
+                    # hit other snakes head
+                    if newHead == newHeadContents.segments[0].location:
                         newHeadContents.kill(app, time, level, self)
-                    else: # hit other snakes tail
-                        self.logger.info(f"{newHeadContents} scored a kill on {self}")
+                    else:  # hit other snakes tail
+                        self.logger.info(
+                            f"{newHeadContents} scored a kill on {self}")
 
                 self.kill(app, time, level, newHeadContents)
             elif "wall" in newHeadContents.tags:
-                self.kill(app, time, level, newHeadContents)
+                return  # self.kill(app, time, level, newHeadContents)
 
         newSegment = SnakeSegment(self, newHead, self.direction)
 
@@ -157,14 +169,15 @@ class Snake(GameObject):
 
         previousSegmentDirection = self.direction
         for segment in self.segments:
-            if segment.direction == previousSegmentDirection: continue
+            if segment.direction == previousSegmentDirection:
+                continue
 
             tpd = segment.direction
 
             segment.direction = previousSegmentDirection
 
             previousSegmentDirection = tpd
-    
+
     def kill(self, app, time, level, murderer):
         if self.isDead:
             return
