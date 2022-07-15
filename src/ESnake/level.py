@@ -5,6 +5,7 @@ from random import randint
 from . import updateHighScore, AppScreen, Snake, Food, Wall, GameObject
 from .controllers import Dylan
 
+
 class Level:
     @staticmethod
     def default():
@@ -43,7 +44,7 @@ class Level:
             self.bots.append(snake)
 
         self.startTime: int = None
-    
+
     @property
     def center(self):
         return (self.width // 2, self.height // 2)
@@ -54,7 +55,7 @@ class Level:
         y = randint(0, self.height - 1)
 
         return (x, y)
-    
+
     @property
     def randomEmptyLocation(self):
         location = self.randomLocation
@@ -65,7 +66,7 @@ class Level:
             location = self.randomLocation
 
         return location
-    
+
     def update(self, app, time):
         time = time + self.timeOffset
 
@@ -74,14 +75,15 @@ class Level:
         self.player.update(app, time, self)
 
         self.refreshOccupiedLocations()
-        
+
         if self.player.isDead:
             msSincePlayerDied = time - self.player.deathTime
 
             if msSincePlayerDied >= 3000:
                 self.logger.debug("done with death delay")
                 app.screen = AppScreen.PostGame
-                storedHighScore = updateHighScore(app.config, self.player.score)
+                storedHighScore = updateHighScore(
+                    app.config, self.player.score)
                 if storedHighScore:
                     self.logger.debug("Got a high score")
 
@@ -100,11 +102,13 @@ class Level:
                         bestScore = "none"
                         if self.bestBot != None:
                             bestScore = self.bestBot.score
-                        self.logger.info(f"Bot got new high score {bot.score} > {bestScore}")
+                        self.logger.info(
+                            f"Bot got new high score {bot.score} > {bestScore}")
                         self.bestBot = bot
 
                     newController = Dylan(self.bestBot.controller)
-                    newBot = Snake(bot.speed, self.randomEmptyLocation, ["bot"], newController)
+                    newBot = Snake(bot.speed, self.randomEmptyLocation, [
+                                   "bot"], newController)
 
                     self.bots.append(newBot)
                     self.bots.remove(bot)
@@ -116,7 +120,8 @@ class Level:
 
     def refreshOccupiedLocations(self):
         if self.occupiedLocations is None:
-            self.occupiedLocations = np.empty(shape=(self.height,self.width),dtype='object')
+            self.occupiedLocations = np.empty(
+                shape=(self.height, self.width), dtype='object')
         else:
             self.occupiedLocations.fill(None)
 
@@ -125,29 +130,38 @@ class Level:
 
         if self.player != None:
             for segment in self.player.segments:
-                self.occupiedLocations[segment.location[0]][segment.location[1]] = self.player
+                self.occupiedLocations[segment.location[0]
+                                       ][segment.location[1]] = self.player
 
         for bot in self.bots:
             for segment in bot.segments:
-                self.occupiedLocations[segment.location[0]][segment.location[1]] = bot
+                self.occupiedLocations[segment.location[0]
+                                       ][segment.location[1]] = bot
 
         for x in range(self.width):
             self.occupiedLocations[0][x] = Wall((x, 0))
-            self.occupiedLocations[self.height - 1][x] = Wall((x, self.height - 1))
+            self.occupiedLocations[self.height -
+                                   1][x] = Wall((x, self.height - 1))
 
         for y in range(self.height):
             self.occupiedLocations[y][0] = Wall((0, y))
-            self.occupiedLocations[y][self.width - 1] = Wall((self.width - 1, y))
+            self.occupiedLocations[y][self.width -
+                                      1] = Wall((self.width - 1, y))
 
     def getContents(self, location):
-        if self.isOutsideWall(location): return None
+        if self.isOutsideWall(location):
+            return None
 
         if self.occupiedLocations is None:
-            if location[0] <= 0: return Wall(location)
-            if location[0] >= self.width - 1: return Wall(location)
+            if location[0] <= 0:
+                return Wall(location)
+            if location[0] >= self.width - 1:
+                return Wall(location)
 
-            if location[1] <= 0: return Wall(location)
-            if location[1] >= self.height - 1: return Wall(location)
+            if location[1] <= 0:
+                return Wall(location)
+            if location[1] >= self.height - 1:
+                return Wall(location)
 
             for food in self.foods:
                 if location == food.location:
@@ -168,13 +182,17 @@ class Level:
             contents = self.occupiedLocations[location[0]][location[1]]
 
             return contents
-    
-    def isOutsideWall(self, location):
-        if location[0] < 0: return True
-        if location[0] > self.width - 1: return True
 
-        if location[1] < 0: return True
-        if location[1] > self.height - 1: return True
+    def isOutsideWall(self, location):
+        if location[0] < 0:
+            return True
+        if location[0] > self.width - 1:
+            return True
+
+        if location[1] < 0:
+            return True
+        if location[1] > self.height - 1:
+            return True
 
         return False
 

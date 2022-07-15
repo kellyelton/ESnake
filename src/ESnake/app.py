@@ -3,6 +3,7 @@ import logging
 from . import AppScreen, Debug
 from .update import versiontuple
 
+
 class App:
     @property
     def state(self): return self.__state
@@ -12,7 +13,7 @@ class App:
         self.logger.info(value)
         self.__state = value
 
-    def __init__(self, engine, config, exelocation, debug : Debug):
+    def __init__(self, engine, config, exelocation, debug: Debug):
         self.logger = logging.getLogger(__name__)
         self.name = "ESnake"
         self.version = versiontuple("0.1.17.0")
@@ -21,7 +22,7 @@ class App:
         self.screen = AppScreen.Loading
         self.config = config
         self.engine = engine
-        self.debug : Debug = debug
+        self.debug: Debug = debug
 
     def run(self):
         try:

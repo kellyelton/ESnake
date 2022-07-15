@@ -17,7 +17,8 @@ from ESnake import *
 from ESnakePyGame import *
 from pprint import pformat
 
-def loadConfig(logger: logging.Logger) -> Config: 
+
+def loadConfig(logger: logging.Logger) -> Config:
     def parseBool(boolString: str) -> bool:
         return boolString.lower() in ['true', '1']
 
@@ -39,7 +40,7 @@ def loadConfig(logger: logging.Logger) -> Config:
             elif nodeName == 'screenSize':
                 xnode = nodeValue[0]
                 ynode = nodeValue[1]
-                xstring= xnode.value
+                xstring = xnode.value
                 ystring = ynode.value
                 x = int(xstring)
                 y = int(ystring)
@@ -74,12 +75,14 @@ def loadConfig(logger: logging.Logger) -> Config:
 
     return config
 
+
 def update(logger, exePath, overwritePath):
     tryCount = 0
 
     while True:
         try:
-            logger.info(f"Trying to replacing file {overwritePath} with {exePath}")
+            logger.info(
+                f"Trying to replacing file {overwritePath} with {exePath}")
 
             shutil.copy2(exePath, overwritePath)
 
@@ -102,6 +105,7 @@ def update(logger, exePath, overwritePath):
         overwritePath
     ])
 
+
 def runGame(logger, exePath):
     debug = Debug()
     debugString = pformat(vars(debug))
@@ -120,7 +124,8 @@ def runGame(logger, exePath):
 
     app.run()
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     logger: logging.Logger = logging.getLogger(__name__)
 
     try:
@@ -134,9 +139,10 @@ if __name__=='__main__':
                 overwritePath = sys.argv[2].strip("'\"")
                 logpath = "updatelog.txt"
 
-        logpath = os.path.join(os.getcwd(), logpath)           
+        logpath = os.path.join(os.getcwd(), logpath)
 
-        logging.basicConfig(filename=logpath, filemode='w', format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.DEBUG)
+        logging.basicConfig(filename=logpath, filemode='w',
+                            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.DEBUG)
 
         logger.info("START")
 
@@ -154,7 +160,7 @@ if __name__=='__main__':
         for arg in sys.argv:
             logger.info(f"ARG {count}: {arg}")
 
-            count+=1
+            count += 1
 
         if runUpdater:
             logger.info("running updater")
