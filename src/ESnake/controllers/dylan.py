@@ -6,7 +6,7 @@ from .. import Direction, Food, Wall, Snake
 
 
 class Dylan:
-    viewRadius = 5
+    viewRadius = 4
     net = None
 
     def __init__(self, parent=None):
@@ -115,14 +115,19 @@ class Dylan:
 
         if oDoMove < 0.5:
             snake.requestedDirection = None
-        elif oDirection <= 0.25:  # left
+        elif oDirection <= 0.25 and oDirection >= 0:  # left
             snake.requestedDirection = Direction.left
-        elif oDirection <= 0.50:  # up
+        elif oDirection <= 0.50 and oDirection > 0.25:  # up
             snake.requestedDirection = Direction.up
-        elif oDirection <= 0.75:  # right
+        elif oDirection <= 0.75 and oDirection > 0.50:  # right
             snake.requestedDirection = Direction.right
-        elif oDirection <= 1:  # down
+        elif oDirection <= 1 and oDirection > 0.75:  # down
             snake.requestedDirection = Direction.down
+        else:
+            raise "unexpected..."
+
+        if oDirection > 1:
+            raise "Ah snap"
 
     def getLevelContents(self, level, snake, x, y):
         if level.isOutsideWall((x, y)):
@@ -135,13 +140,13 @@ class Dylan:
         elif contents is snake:
             return 1
         elif isinstance(contents, Food):
-            return 0.60
+            return 0.20
         elif isinstance(contents, Snake):
-            return 0.70
+            return 0.40
         elif contents is level.player:
-            return 0.80
+            return 0.60
         elif isinstance(contents, Wall):
-            return 0.90
+            return 0.80
         else:
             raise "invalid contents"
 
@@ -156,10 +161,8 @@ class Synapse:
 
     def stimulate(self, signal):
         def clamp(num):
-            if num > 1:
-                return 1
-            elif num < 0:
-                return 0
+            if num > 1 or num < 0:
+                return num % 1
             else:
                 return num
 
@@ -252,14 +255,14 @@ class Net:
         config = []
 
         prevLayer = None
-        layerCount = 4  # int(random.random() * 10) + 1
+        layerCount = 8  # int(random.random() * 10) + 1
         for i in range(0, layerCount):
             layer = None
             if i == 0:
                 layerSize = inputs
                 layer = Layer.random(layerSize)
-                for neuron in layer.neurons:
-                    neuron.activation = 0
+                # for neuron in layer.neurons:
+                #    neuron.activation = 0
 
             elif i == layerCount - 1:
                 layerSize = outputs
