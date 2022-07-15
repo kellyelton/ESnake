@@ -3,4 +3,4 @@ class Config:
         self.style = "classic"
         self.maxfps = 120
         self.fullscreen = False
-        self.screenSize = [800, 600]
+        self.screenSize = [1024, 768]
