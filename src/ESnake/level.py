@@ -59,8 +59,8 @@ class Level:
     @property
     def randomEmptyLocation(self):
         location = self.randomLocation
-        # TODO: if no empty, then check to the right, if not empty, check right again, etc until we find one.
-        # Checking random over and over is likely to cause lots of fails and random slowdowns
+        # TODO: find better algo
+        # Checking random will cause unexpected slowdowns
 
         while not self.isEmpty(location):
             location = self.randomLocation
@@ -103,7 +103,8 @@ class Level:
                         if self.bestBot is not None:
                             bestScore = self.bestBot.score
                         self.logger.info(
-                            f"Bot got new high score {bot.score} > {bestScore}")
+                            f"Bot got new high score\
+                                {bot.score} > {bestScore}")
                         self.bestBot = bot
 
                     if random.random() > 0.5:
