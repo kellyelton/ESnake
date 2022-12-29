@@ -19,8 +19,10 @@ class Snake(GameObject):
         self.requestedDirection: Direction = None
         self.lastTimeMoved = 0
         self.lastTimeAte = 0
+        self.hunger = 0
         self.deathTime = 0
         self.isDead = False
+        self.killCount = 0
         self.tileTouchCount = 0
         self.tilesTouched = set()
         self.controller = controller
@@ -70,6 +72,8 @@ class Snake(GameObject):
             maxEnergyDrain = 0.2
         elif self.tileTouchCount > 5:
             maxEnergyDrain = 0.3
+
+        self.hunger = min(1000, self.hunger + 1)
 
         # 3 minutes old and greater, max energy drain
         secondsAlive = min(ageCap, (time - self.startTime) / 1000)
@@ -140,6 +144,7 @@ class Snake(GameObject):
                 self.logger.info(
                     f"eating food. new food score {self.foodScore}")
                 self.lastTimeAte = time
+                self.hunger = 0
                 self.energy = min(1, self.energy + 0.35)
                 removeTail = False
                 level.moveFood(newHeadContents)
@@ -185,6 +190,9 @@ class Snake(GameObject):
         if self == level.player:
             return  # don't kill player while we're debugging ai
 
+        if isinstance(murderer, Snake):
+            murderer.killCount = murderer.killCount + 1
+
         self.logger.debug(f"{self} killed: {murderer}.")
 
         self.tileTouchCount = len(self.tilesTouched)
@@ -201,10 +209,12 @@ class Snake(GameObject):
 
         foodScore = self.foodScore * 1000
 
+        killBonus = self.killCount * 1000
+
         ageScore = 0
         if self.startTime is not None:
             ageScore = (self.deathTime - self.startTime) / 200
 
-        score = foodScore + tileScore + ageScore
+        score = foodScore + tileScore + ageScore + killBonus
 
         self.score = int(score)

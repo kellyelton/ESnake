@@ -9,7 +9,7 @@ from .controllers import Dylan
 class Level:
     @staticmethod
     def default():
-        return Level(60, 60, 30, 300, 30)
+        return Level(60, 60, 30, 200, 30)
 
     def __init__(self, width, height, speed, foodCount, botCount):
         self.logger = logging.getLogger(__name__)
@@ -18,10 +18,12 @@ class Level:
         self.foods = []
         self.player = None
         self.bots = []
+        self.bestBots = []
         self.occupiedLocations = None
         self.timeOffset = 0
         self.initialFoodCount = foodCount
         self.initialBotCount = botCount
+        self.maxBotCount = self.initialBotCount
         self.locations = [[None for x in range(width)] for y in range(height)]
         self.lastUpdateTime = 0
 
@@ -33,8 +35,6 @@ class Level:
 
         self.player = Snake(speed, self.center, ["player"])
         self.updateLocation(self.player)
-
-        self.bestBot = None
 
         self.bots = []
         for i in range(self.initialBotCount):
@@ -98,27 +98,57 @@ class Level:
                 if msSincePlayerDied >= 1000:
                     self.logger.debug("done with death delay")
 
-                    if self.bestBot is None or bot.score > self.bestBot.score:
-                        bestScore = "none"
-                        if self.bestBot is not None:
-                            bestScore = self.bestBot.score
-                        self.logger.info(
-                            f"Bot got new high score\
-                                {bot.score} > {bestScore}")
-                        self.bestBot = bot
-
-                    if random.random() > 0.5:
-                        newController = Dylan(self.bestBot.controller)
+                    if len(self.bestBots) == 0:
+                        self.bestBots.append(bot)
                     else:
-                        newController = Dylan()
+                        for i in range(0, len(self.bestBots)):
+                            if bot.score > self.bestBots[i].score:
+                                self.bestBots.insert(i, bot)
+                                self.logger.info(
+                                    f"Bot entered {i + 1} place " +
+                                    f"with score {bot.score}"
+                                )
+                                self.bestBots = self.bestBots[:10]
+                                break
 
-                    newBot = Snake(bot.speed, self.randomEmptyLocation, [
-                                   "bot"], newController)
-
-                    self.bots.append(newBot)
                     self.bots.remove(bot)
 
                     self.refreshOccupiedLocations()
+
+        if not hasattr(self, 'maxBotCount'):
+            setattr(self, 'maxBotCount', self.initialBotCount)
+
+        botLength = len(self.bots)
+
+        if botLength < self.maxBotCount:
+            diff = self.maxBotCount - botLength
+            for i in range(0, diff):
+                if random.random() > 0.5:
+                    bbi = random.randint(0, len(self.bestBots) - 1)
+                    bb = self.bestBots[bbi]
+                    newController = Dylan(bb.controller)
+                else:
+                    newController = Dylan()
+
+                newBot = Snake(bot.speed, self.randomEmptyLocation, [
+                    "bot"], newController)
+
+                self.bots.append(newBot)
+
+                self.refreshOccupiedLocations()
+
+    def respawnBest(self):
+        if len(self.bestBots) == 0:
+            return
+
+        best = self.bestBots[0]
+
+        newController = Dylan(best.controller, mutate=False)
+        newbest = Snake(best.speed, self.randomEmptyLocation,
+                        ["bot", "best"], newController)
+
+        self.bots.append(newbest)
+        self.refreshOccupiedLocations()
 
     def updateLocation(self, gameObject: GameObject):
         pass

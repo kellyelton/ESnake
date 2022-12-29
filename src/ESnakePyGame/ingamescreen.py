@@ -36,6 +36,24 @@ class PyInGameScreenEngine:
             elif event.key == pygame.K_ESCAPE:
                 self.logger.debug("esc pressed, switch to post game")
                 app.screen = AppScreen.PostGame
+            elif event.key == pygame.K_KP_MINUS:
+                if not hasattr(self.__level, 'maxBotCount'):
+                    setattr(self.__level, 'maxBotCount',
+                            self.__level.initialBotCount)
+                self.__level.maxBotCount = max(1, self.__level.maxBotCount - 1)
+                self.logger.debug("Reduced bot count to " +
+                                  str(self.__level.maxBotCount))
+            elif event.key == pygame.K_KP_PLUS:
+                if not hasattr(self.__level, 'maxBotCount'):
+                    setattr(self.__level, 'maxBotCount',
+                            self.__level.initialBotCount)
+                self.__level.maxBotCount = min(
+                    1000, self.__level.maxBotCount + 1)
+                self.logger.debug("Increased bot count to " +
+                                  str(self.__level.maxBotCount))
+            elif event.key == pygame.K_r:
+                self.logger.debug("Requested to respawn best bot")
+                self.__level.respawnBest()
 
     def update(self, app):
         now = pygame.time.get_ticks()
@@ -283,8 +301,8 @@ class PyInGameScreenEngine:
         pyscreen.blit(scoreText, scoreTextLocation)
 
         bestBotScore = 0
-        if self.__level.bestBot != None:
-            bestBotScore = int(self.__level.bestBot.score)
+        if len(self.__level.bestBots) > 0:
+            bestBotScore = int(self.__level.bestBots[0].score)
         botscoreText = self.__scoreFont.render(
             str(bestBotScore), True, app.engine.style.inGameScoreTextColor)
 

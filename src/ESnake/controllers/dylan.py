@@ -6,20 +6,23 @@ from .. import Direction, Food, Wall, Snake
 
 
 class Dylan:
-    viewRadius = 4
+    viewRadius = 5
     net = None
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, mutate=True):
         self.logger = logging.getLogger(__name__)
 
-        inputCount = ((self.viewRadius*2)**2)+(self.viewRadius * 4)+1
-        inputCount += 3  # direction and energy
+        inputCount = ((self.viewRadius * 2) - 1)**2
+        inputCount += 8  # direction, energy, hunger
         outputCount = 6
 
         if parent is None:
             self.net = Net(inputCount, outputCount)
         else:
-            self.net = self.mutate(parent.net)
+            if mutate:
+                self.net = self.mutate(parent.net)
+            else:
+                self.net = self.clone(parent.net)
 
     def mutate(self, srcNet):
         def clamp(num, min, max):
@@ -30,7 +33,7 @@ class Dylan:
             else:
                 return num
 
-        adjMax = random.random()  # maximum deviation per weight
+        adjMax = random.uniform(0, 0.001)
 
         srcLayerCount = len(srcNet.layers)
 
@@ -71,38 +74,80 @@ class Dylan:
         newnet = Net(srcNet.inputs, srcNet.outputs, nlayers)
         return newnet
 
+    def clone(self, srcNet):
+        srcLayerCount = len(srcNet.layers)
+
+        nlayers = []
+        prevSrcLayer = None
+        prevNewLayer = None
+        for i in range(0, srcLayerCount):
+            srcLayer = srcNet.layers[i]
+
+            nNeurons = []
+            for srcNeuron in srcLayer.neurons:
+                activation = srcNeuron.activation
+                nNeuron = Neuron(activation)
+                nNeurons.append(nNeuron)
+
+            if prevSrcLayer is not None:
+                for i in range(0, len(prevSrcLayer.neurons)):
+                    srcNeuron = prevSrcLayer.neurons[i]
+                    ni = 0
+                    for srcSynapse in srcNeuron.synapses:
+                        weight = srcSynapse.weight
+                        nSynapse = Synapse(weight, nNeurons[ni])
+                        prevNewLayer.neurons[i].synapses.append(nSynapse)
+                        ni = ni + 1
+
+            nLayer = Layer(nNeurons)
+            prevNewLayer = nLayer
+
+            prevSrcLayer = srcLayer
+            nlayers.append(nLayer)
+
+        newnet = Net(srcNet.inputs, srcNet.outputs, nlayers)
+        return newnet
+
     def update(self, app, time, level, snake):
         pass
 
     def move(self, app, time, level, snake):
-        mov = 0
-        dir = 0
+        dirLeft = 0
+        dirUp = 0
+        dirRight = 0
+        dirDown = 0
         if snake.direction == Direction.left:
-            mov = 1
-            dir = 0.15
+            dirLeft = 1
         elif snake.direction == Direction.up:
-            mov = 1
-            dir = 0.35
+            dirUp = 1
         elif snake.direction == Direction.right:
-            mov = 1
-            dir = 0.65
+            dirRight = 1
         elif snake.direction == Direction.down:
-            mov = 1
-            dir = 0.85
+            dirDown = 1
 
         inputs = [
-            mov,
-            dir,
-            snake.energy
+            dirLeft,
+            dirUp,
+            dirRight,
+            dirDown,
+            random.randrange(-10, 10),
+            snake.energy,
+            random.randrange(-1, 1),
+            snake.hunger
         ]
 
         center = snake.segments[0].location
 
-        startX = center[0] - self.viewRadius
-        startY = center[1] - self.viewRadius
+        startX = center[0] - (self.viewRadius - 1)
+        startY = center[1] - (self.viewRadius - 1)
 
-        endX = center[0] + self.viewRadius
-        endY = center[1] + self.viewRadius
+        endX = center[0] + (self.viewRadius - 1)
+        endY = center[1] + (self.viewRadius - 1)
+
+        # TODO: Add stress (how many threats nearby)
+        # probably goes down over time
+        # TODO: Add hunger value, basically time since last ate
+        # TODO: Add a few random inputs
 
         for y in range(startY, endY + 1):
             for x in range(startX, endX + 1):
@@ -110,29 +155,25 @@ class Dylan:
 
         outputs = self.net.process(inputs)
 
-        oDoMove = outputs[0]
-        oDirection = outputs[1]
+        largestI = 0
+        for i in range(0, 4):
+            if outputs[largestI] < outputs[i]:
+                largestI = i
 
-        if oDoMove < 0.5:
+        if largestI < 0.5:
             snake.requestedDirection = None
-        elif oDirection <= 0.25 and oDirection >= 0:  # left
+        elif largestI == 0:
             snake.requestedDirection = Direction.left
-        elif oDirection <= 0.50 and oDirection > 0.25:  # up
+        elif largestI == 1:
             snake.requestedDirection = Direction.up
-        elif oDirection <= 0.75 and oDirection > 0.50:  # right
+        elif largestI == 2:
             snake.requestedDirection = Direction.right
-        elif oDirection <= 1 and oDirection > 0.75:  # down
+        elif largestI == 3:
             snake.requestedDirection = Direction.down
         else:
             raise "unexpected..."
 
-        if oDirection > 1:
-            raise "Ah snap"
-
     def getLevelContents(self, level, snake, x, y):
-        if level.isOutsideWall((x, y)):
-            return 0.9
-
         contents = level.getContents((x, y))
 
         if contents is None:
@@ -140,13 +181,13 @@ class Dylan:
         elif contents is snake:
             return 1
         elif isinstance(contents, Food):
-            return 0.20
+            return 100
         elif isinstance(contents, Snake):
-            return 0.40
+            return 1000
         elif contents is level.player:
-            return 0.60
+            return 10000
         elif isinstance(contents, Wall):
-            return 0.80
+            return 0.5
         else:
             raise "invalid contents"
 
@@ -161,21 +202,17 @@ class Synapse:
 
     def stimulate(self, signal):
         def clamp(num):
-            if num > 1 or num < 0:
-                return num % 1
+            if num > 1:
+                return 1
+            elif num < 0:
+                return 0
             else:
                 return num
 
-        adjustedSignal = self.adjust(signal)
+        # Only allow a percentage of the signal through
+        adjustedSignal = signal * self.weight
         adjustedSignal = clamp(adjustedSignal)
         self.outputNeuron.accumulate(adjustedSignal)
-
-    def adjust(self, signal):
-        adjustment = self.weight
-
-        adjustedSignal = signal + (signal * adjustment)
-        return adjustedSignal
-        # return 1 / (1 + exp(-signal))
 
 
 class Neuron:
@@ -190,27 +227,25 @@ class Neuron:
     def attach(self, layer):
         for neuron in layer.neurons:
             # maxWeight = 1 / layer.size
-            randomWeight = random.uniform(-1, 1)
+            randomWeight = random.uniform(0, 0.5)
 
             synapse = Synapse(randomWeight, neuron)
+
             self.synapses.append(synapse)
 
     def accumulate(self, signal):
-        s = float(min(1, self.accumulatedSignal + signal))
-        self.accumulatedSignal = s
+        self.accumulatedSignal = self.accumulatedSignal + float(signal)
 
     def process(self):
-        synapseCount = len(self.synapses)
-        if synapseCount == 0:
-            return
+        self.accumulatedSignal = 1 / (1 + np.exp(-self.accumulatedSignal))
 
         if self.accumulatedSignal < self.activation:
-            self.activation = min(1, self.activation + 0.001)
+            # self.activation = min(1, self.activation + 0.001)
             return
 
-        self.activation = max(0, self.activation - 0.002)
+        # self.activation = max(0, self.activation - 0.002)
 
-        splitSignal = self.accumulatedSignal / synapseCount
+        splitSignal = self.accumulatedSignal / len(self.synapses)
 
         for synapse in self.synapses:
             synapse.stimulate(splitSignal)
@@ -220,17 +255,6 @@ class Layer:
     def __init__(self, neurons):
         self.neurons = list(neurons)
         self.size = len(self.neurons)
-
-    def accumulate(self, inputs):
-        i = 0
-
-        for signal in inputs:
-            if i == self.size:
-                break
-
-            self.neurons[i].accumulate(signal)
-
-            i = i + 1
 
     def process(self):
         for i in range(0, self.size):
@@ -255,20 +279,17 @@ class Net:
         config = []
 
         prevLayer = None
-        layerCount = 8  # int(random.random() * 10) + 1
+        layerCount = int(random.random() * 10) + 2
         for i in range(0, layerCount):
             layer = None
             if i == 0:
                 layerSize = inputs
                 layer = Layer.random(layerSize)
-                # for neuron in layer.neurons:
-                #    neuron.activation = 0
-
             elif i == layerCount - 1:
                 layerSize = outputs
                 layer = Layer.random(layerSize)
             else:
-                layerSize = int(random.random() * 16) + 8
+                layerSize = int(random.random() * 16) + 3
                 layer = Layer.random(layerSize)
 
             if prevLayer is not None:
@@ -285,7 +306,8 @@ class Net:
             for neuron in layer.neurons:
                 neuron.accumulatedSignal = 0
 
-        self.layers[0].accumulate(inputs)
+        for i in range(0, len(inputs)):
+            self.layers[0].neurons[i].accumulate(inputs[i])
 
         for layer in self.layers:
             layer.process()
