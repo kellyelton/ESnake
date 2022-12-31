@@ -34,7 +34,7 @@ def loadConfig(logger: logging.Logger) -> Config:
             elif nodeName == 'highScorePath':
                 config.highScorePath = nodeValue
             elif nodeName == 'maxfps':
-                config.maxfps = int(nodeValue)
+                config.maxfps = float(nodeValue)
             elif nodeName == 'style':
                 config.style = nodeValue
             elif nodeName == 'screenSize':
