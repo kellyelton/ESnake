@@ -1,3 +1,6 @@
+import random
+
+
 class Direction:
     @property
     def opposite(self):
@@ -49,6 +52,10 @@ class Direction:
             y = 1
 
         return (x, y)
+
+    @staticmethod
+    def random():
+        return random.choice([Direction.left, Direction.right, Direction.up, Direction.down])
 
     def __init__(self, direction):
         if isinstance(direction, str):
