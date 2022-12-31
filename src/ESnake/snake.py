@@ -16,8 +16,8 @@ class Snake(GameObject):
         self.energy = 1
         self.startTime = None
         self.direction: Direction = Direction.random()
-        self.previousRequestedDirection: Direction = None
-        self.requestedDirection: Direction = None
+        self.previousRequestedDirection: Direction = Direction.none()
+        self.requestedDirection: Direction = Direction.none()
         self.lastTimeMoved = 0
         self.lastTimeAte = 0
         self.hunger = 0
@@ -25,10 +25,10 @@ class Snake(GameObject):
         self.isDead = False
         self.killCount = 0
         self.controller = controller
-        self.segments = [SnakeSegment(self, location, None)]
-        self.viewLocations = None
+        self.segments = [SnakeSegment(self, location, Direction.none())]
+        self.viewLocations: list = None
         self.viewLocationsCount = 0
-        self.viewContents = None
+        self.viewContents: list = None
 
     def update(self, app, time, level):
         if self.viewLocations is None:
@@ -62,35 +62,35 @@ class Snake(GameObject):
             return
 
         # Change course
-        if self.requestedDirection is not None:
+        if self.requestedDirection != Direction.none():
             self.previousRequestedDirection = self.requestedDirection
 
-            if self.requestedDirection == Direction.left:
+            if self.requestedDirection == Direction.left():
                 newDirection = self.direction.relativeLeft
-            elif self.requestedDirection == Direction.right:
+            elif self.requestedDirection == Direction.right():
                 newDirection = self.direction.relativeRight
             else:
-                raise "Invalid requested direction"
+                raise Exception("Invalid requested direction")
 
             self.direction = newDirection
-            self.requestedDirection = None
+            self.requestedDirection = Direction.none()
         else:
-            self.previousRequestedDirection = None
+            self.previousRequestedDirection = Direction.none()
 
-        if self.direction is None:
-            raise "No direction set"
+        if self.direction == Direction.none():
+            raise Exception("No direction set")
 
         oldHead = self.segments[0].location
         newHead = oldHead
         removeTail = True
 
-        if self.direction == Direction.left:
+        if self.direction == Direction.left():
             newHead = (oldHead[0] - 1, oldHead[1])
-        elif self.direction == Direction.right:
+        elif self.direction == Direction.right():
             newHead = (oldHead[0] + 1, oldHead[1])
-        elif self.direction == Direction.up:
+        elif self.direction == Direction.up():
             newHead = (oldHead[0], oldHead[1] - 1)
-        elif self.direction == Direction.down:
+        elif self.direction == Direction.down():
             newHead = (oldHead[0], oldHead[1] + 1)
 
         if level.isOutsideWall(newHead):
@@ -185,25 +185,25 @@ class Snake(GameObject):
     def update_view_locations(self, level):
         head = self.segments[0].location
         self.viewLocationsCount = 3
-        if self.direction == Direction.left:
+        if self.direction == Direction.left():
             self.viewLocations = [
                 (head[0] - 1, head[1]),
                 (head[0], head[1] + 1),
                 (head[0], head[1] - 1)
             ]
-        elif self.direction == Direction.right:
+        elif self.direction == Direction.right():
             self.viewLocations = [
                 (head[0] + 1, head[1]),
                 (head[0], head[1] - 1),
                 (head[0], head[1] + 1)
             ]
-        elif self.direction == Direction.up:
+        elif self.direction == Direction.up():
             self.viewLocations = [
                 (head[0], head[1] - 1),
                 (head[0] - 1, head[1]),
                 (head[0] + 1, head[1])
             ]
-        elif self.direction == Direction.down:
+        elif self.direction == Direction.down():
             self.viewLocations = [
                 (head[0], head[1] + 1),
                 (head[0] + 1, head[1]),

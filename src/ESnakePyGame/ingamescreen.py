@@ -23,10 +23,10 @@ class PyInGameScreenEngine:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
                 self.logger.debug("Requested Direction changed to Left")
-                self.__level.player.requestedDirection = Direction.left
+                self.__level.player.requestedDirection = Direction.left()
             elif event.key == pygame.K_RIGHT:
                 self.logger.debug("Requested Direction changed to Right")
-                self.__level.player.requestedDirection = Direction.right
+                self.__level.player.requestedDirection = Direction.right()
             elif event.key == pygame.K_ESCAPE:
                 self.logger.debug("esc pressed, switch to post game")
                 app.screen = AppScreen.PostGame
@@ -249,25 +249,25 @@ class PyInGameScreenEngine:
             #width = drawLocation.width
             #height = drawLocation.height
 #
-            #if bot.direction == Direction.up:
+            #if bot.direction == Direction.up():
             #    points = [
             #        (center[0], center[1] - height / 2),
             #        (center[0] - width / 2, center[1] + height / 2),
             #        (center[0] + width / 2, center[1] + height / 2)
             #    ]
-            #elif bot.direction == Direction.down:
+            #elif bot.direction == Direction.down():
             #    points = [
             #        (center[0], center[1] + height / 2),
             #        (center[0] - width / 2, center[1] - height / 2),
             #        (center[0] + width / 2, center[1] - height / 2)
             #    ]
-            #elif bot.direction == Direction.left:
+            #elif bot.direction == Direction.left():
             #    points = [
             #        (center[0] - width / 2, center[1]),
             #        (center[0] + width / 2, center[1] - height / 2),
             #        (center[0] + width / 2, center[1] + height / 2)
             #    ]
-            #elif bot.direction == Direction.right:
+            #elif bot.direction == Direction.right():
             #    points = [
             #        (center[0] + width / 2, center[1]),
             #        (center[0] - width / 2, center[1] - height / 2),
