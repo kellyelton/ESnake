@@ -1,6 +1,7 @@
 import random
 import logging
 import numpy as np
+import smtplib, ssl, json
 from random import randint
 from . import updateHighScore, AppScreen, Snake, Food, Wall, GameObject
 from .controllers import Dylan
@@ -9,7 +10,7 @@ from .controllers import Dylan
 class Level:
     @staticmethod
     def default():
-        return Level(60, 60, 30, 200, 30)
+        return Level(60, 60, 5, 200, 30)
 
     def __init__(self, width, height, speed, foodCount, botCount):
         self.logger = logging.getLogger(__name__)
@@ -58,12 +59,27 @@ class Level:
 
     @property
     def randomEmptyLocation(self):
-        location = self.randomLocation
-        # TODO: find better algo
-        # Checking random will cause unexpected slowdowns
-
-        while not self.isEmpty(location):
+        while True:
+            # find empty random location
             location = self.randomLocation
+
+            while not self.isEmpty(location):
+                location = self.randomLocation
+            
+            # verify that there is nothing in the 4x4 grid around the location
+            cx = location[0]
+            cy = location[1]
+            is_fully_empty = True
+            for i in range(cx - 2, cx + 2):
+                for j in range(cy - 2, cy + 2):
+                    if not self.isEmpty((i, j)):
+                        is_fully_empty = False
+                        break
+                if not is_fully_empty:
+                    break
+
+            if is_fully_empty:
+                break
 
         return location
 
@@ -95,21 +111,71 @@ class Level:
             if bot.isDead:
                 msSincePlayerDied = time - bot.deathTime
 
-                if msSincePlayerDied >= 1000:
+                if msSincePlayerDied >= 500:
                     self.logger.debug("done with death delay")
 
-                    if len(self.bestBots) == 0:
-                        self.bestBots.append(bot)
-                    else:
-                        for i in range(0, len(self.bestBots)):
-                            if bot.score > self.bestBots[i].score:
-                                self.bestBots.insert(i, bot)
-                                self.logger.info(
-                                    f"Bot entered {i + 1} place " +
-                                    f"with score {bot.score}"
-                                )
-                                self.bestBots = self.bestBots[:10]
-                                break
+                    if bot.score > 3:
+                        if len(self.bestBots) == 0:
+                            self.bestBots.append(bot)
+                        else:
+                            for i in range(0, len(self.bestBots)):
+                                if bot.score >= self.bestBots[i].score:
+                                    self.bestBots.insert(i, bot)
+                                    self.logger.info(
+                                        f"Bot entered {i + 1} place " +
+                                        f"with score {bot.score}"
+                                    )
+                                    self.bestBots = self.bestBots[:160 * 2]
+
+                                    if i == 0:
+                                        # send me an email with the newest bot serialized to json
+
+                                        # convert bot to json
+                                        # exclude Logger
+                                        botJson = ""
+                                        
+                                        from email.mime.text import MIMEText
+                                        from email.mime.multipart import MIMEMultipart
+
+                                        sender_email = ""
+                                        receiver_email = ""
+
+                                        message = MIMEMultipart("alternative")
+                                        message["Subject"] = f'New Best Bot {bot.score}'
+                                        message["From"] = sender_email
+                                        message["To"] = receiver_email
+
+                                        # Create the plain-text and HTML version of your message
+                                        text = f"""\
+                                        New Best Bot {bot.score}"""
+                                        html = f"""\
+                                        <html>
+                                        <body>
+                                            <p>New Best Bot {bot.score}</p>
+                                            <p>{botJson}</p>
+                                        </body>
+                                        </html>
+                                        """
+
+                                        # Turn these into plain/html MIMEText objects
+                                        part1 = MIMEText(text, "plain")
+                                        part2 = MIMEText(html, "html")
+
+                                        # Add HTML/plain-text parts to MIMEMultipart message
+                                        # The email client will try to render the last part first
+                                        message.attach(part1)
+                                        message.attach(part2)
+
+                                        # Create secure connection with server and send email
+                                        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+                                            server.login("", "")
+                                            server.sendmail(
+                                                sender_email, receiver_email, message.as_string()
+                                            )
+
+                                            server.quit()
+
+                                    break
 
                     self.bots.remove(bot)
 
@@ -122,16 +188,22 @@ class Level:
 
         if botLength < self.maxBotCount:
             diff = self.maxBotCount - botLength
+            has_best_bots = len(self.bestBots) > 0
+
             for i in range(0, diff):
-                if random.random() > 0.5:
-                    bbi = random.randint(0, len(self.bestBots) - 1)
-                    bb = self.bestBots[bbi]
-                    newController = Dylan(bb.controller)
+                # if best bot count is 0, 100% chance to create a new bot
+                # if best bot count is maxed at 100, 5% chance to create a new bot
+                # reduce create new bot chance from 100% to 5% linearly as best bot count increases
+
+                create_new_bot_chance = 1.0 - (0.95 * (len(self.bestBots) / 100))
+
+                if random.random() > create_new_bot_chance:
+                    random_best = random.choice(self.bestBots)
+                    newController = Dylan(random_best.controller)
                 else:
                     newController = Dylan()
 
-                newBot = Snake(bot.speed, self.randomEmptyLocation, [
-                    "bot"], newController)
+                newBot = Snake(bot.speed, self.randomEmptyLocation, ["bot"], newController)
 
                 self.bots.append(newBot)
 

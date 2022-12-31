@@ -6,73 +6,27 @@ from .. import Direction, Food, Wall, Snake
 
 
 class Dylan:
-    viewRadius = 5
     net = None
 
     def __init__(self, parent=None, mutate=True):
         self.logger = logging.getLogger(__name__)
 
-        inputCount = ((self.viewRadius * 2) - 1)**2
-        inputCount += 8  # direction, energy, hunger
-        outputCount = 6
+        inputCount = 3
+        outputCount = 2
 
         if parent is None:
-            self.net = Net(inputCount, outputCount)
+            self.net = NetV2(inputCount, outputCount)
+            self.color = (random.randint(30, 200), random.randint(30, 200), random.randint(30, 200))
         else:
             if mutate:
-                self.net = self.mutate(parent.net)
+                self.net = parent.net.mutate()
+                # use parent color, but randomly change one of the RGB values up to 1%
+                self.color = (parent.color[0] + random.randint(-5, 5), parent.color[1] + random.randint(-5, 5), parent.color[2] + random.randint(-5, 5))
+                # make sure no color value is less than 30 or greater than 200
+                self.color = (max(30, min(200, self.color[0])), max(30, min(200, self.color[1])), max(30, min(200, self.color[2])))
             else:
-                self.net = self.clone(parent.net)
-
-    def mutate(self, srcNet):
-        def clamp(num, min, max):
-            if num > max:
-                return max
-            elif num < min:
-                return min
-            else:
-                return num
-
-        adjMax = random.uniform(0, 0.001)
-
-        srcLayerCount = len(srcNet.layers)
-
-        nlayers = []
-        prevSrcLayer = None
-        prevNewLayer = None
-        for i in range(0, srcLayerCount):
-            srcLayer = srcNet.layers[i]
-
-            nNeurons = []
-            for srcNeuron in srcLayer.neurons:
-                adjustment = random.uniform(-adjMax, adjMax)
-                activation = srcNeuron.activation
-                activation = activation + adjustment
-                activation = clamp(activation, 0, 1)
-                nNeuron = Neuron(activation)
-                nNeurons.append(nNeuron)
-
-            if prevSrcLayer is not None:
-                for i in range(0, len(prevSrcLayer.neurons)):
-                    srcNeuron = prevSrcLayer.neurons[i]
-                    ni = 0
-                    for srcSynapse in srcNeuron.synapses:
-                        adjustment = random.uniform(-adjMax, adjMax)
-                        weight = srcSynapse.weight
-                        weight = weight + adjustment
-                        weight = clamp(weight, -1, 1)
-                        nSynapse = Synapse(weight, nNeurons[ni])
-                        prevNewLayer.neurons[i].synapses.append(nSynapse)
-                        ni = ni + 1
-
-            nLayer = Layer(nNeurons)
-            prevNewLayer = nLayer
-
-            prevSrcLayer = srcLayer
-            nlayers.append(nLayer)
-
-        newnet = Net(srcNet.inputs, srcNet.outputs, nlayers)
-        return newnet
+                self.net = parent.net.clone()
+                self.color = parent.color
 
     def clone(self, srcNet):
         srcLayerCount = len(srcNet.layers)
@@ -110,210 +64,394 @@ class Dylan:
 
     def update(self, app, time, level, snake):
         pass
-
+    
     def move(self, app, time, level, snake):
-        dirLeft = 0
-        dirUp = 0
-        dirRight = 0
-        dirDown = 0
-        if snake.direction == Direction.left:
-            dirLeft = 1
-        elif snake.direction == Direction.up:
-            dirUp = 1
-        elif snake.direction == Direction.right:
-            dirRight = 1
-        elif snake.direction == Direction.down:
-            dirDown = 1
+        # Build an array of inputs
+        # The inputs are the following:
+        # 1. Contents of the tile directly in front of the snake
+        # 2. Contents of the tile directly to the left of the snake
+        # 3. Contents of the tile directly to the right of the snake
+        # The coordinates are relative to the snake's head and the direction it's moving
 
-        inputs = [
-            dirLeft,
-            dirUp,
-            dirRight,
-            dirDown,
-            random.randrange(-10, 10),
-            snake.energy,
-            random.randrange(-1, 1),
-            snake.hunger
-        ]
+        snake_head_location = snake.segments[0].location
 
-        center = snake.segments[0].location
+        if snake.viewLocationsCount != self.net.num_inputs:
+            raise "Number of view locations does not match number of inputs"
 
-        startX = center[0] - (self.viewRadius - 1)
-        startY = center[1] - (self.viewRadius - 1)
-
-        endX = center[0] + (self.viewRadius - 1)
-        endY = center[1] + (self.viewRadius - 1)
-
-        # TODO: Add stress (how many threats nearby)
-        # probably goes down over time
-        # TODO: Add hunger value, basically time since last ate
-        # TODO: Add a few random inputs
-
-        for y in range(startY, endY + 1):
-            for x in range(startX, endX + 1):
-                inputs.append(self.getLevelContents(level, snake, x, y))
+        inputs = []
+        for i in range(0, snake.viewLocationsCount):
+            contents = snake.viewContents[i]
+            inputs.append(self.getLevelContents(level, snake, contents))
 
         outputs = self.net.process(inputs)
 
-        largestI = 0
-        for i in range(0, 4):
-            if outputs[largestI] < outputs[i]:
-                largestI = i
+        # All outputs should be between 0 and 1
+        for output in outputs:
+            if output < 0 or output > 1:
+                raise "Output is not between 0 and 1"
 
-        if largestI < 0.5:
+        # if the first output is greater than 0.8, then the snake should turn left
+        # if the second output is greater than 0.8, then the snake should turn right
+        # if both are greater than 0.8, then the snake should not turn
+        # if both are equal, then the snake should not turn
+        
+        if outputs[0] > 0.8 and outputs[1] > 0.8:
             snake.requestedDirection = None
-        elif largestI == 0:
+        elif outputs[0] > 0.8:
             snake.requestedDirection = Direction.left
-        elif largestI == 1:
-            snake.requestedDirection = Direction.up
-        elif largestI == 2:
+        elif outputs[1] > 0.8:
             snake.requestedDirection = Direction.right
-        elif largestI == 3:
-            snake.requestedDirection = Direction.down
         else:
-            raise "unexpected..."
+            snake.requestedDirection = None
 
-    def getLevelContents(self, level, snake, x, y):
-        contents = level.getContents((x, y))
-
+    def getLevelContents(self, level, snake, contents):
         if contents is None:
+            # nothing, probably outside of bounds
             return 0
         elif contents is snake:
-            return 1
+            # self
+            return -1
         elif isinstance(contents, Food):
-            return 100
+            # Food to eat
+            return 1
         elif isinstance(contents, Snake):
-            return 1000
+            # other ai snek
+            return -1
         elif contents is level.player:
-            return 10000
+            # other snek, player snek
+            return -1
         elif isinstance(contents, Wall):
-            return 0.5
+            return -1
         else:
             raise "invalid contents"
 
-    def activation(self, x):
-        return 1 / (1 + np.exp(-x))
+class NeuronV2:
+    def __init__(self, num_inputs, activation_fn=None):
+        self.num_inputs = num_inputs
+        self.weights = np.random.uniform(size=num_inputs)
+        self.bias = np.random.uniform()
+        if activation_fn is None:
+            self.activation_fn = self.sigmoid
+        else:
+            self.activation_fn = activation_fn
 
+    def forward(self, inputs):
+        weighted_inputs = self.weights * inputs
+        weighted_sum = np.sum(weighted_inputs) + self.bias
+        return self.activation_fn(weighted_sum)
+    
+    def clone(self):
+        clone = NeuronV2(self.num_inputs, self.activation_fn)
+        clone.weights = np.copy(self.weights)
+        clone.bias = self.bias
+        return clone
 
-class Synapse:
-    def __init__(self, weight, outputNeuron):
-        self.weight = weight
-        self.outputNeuron = outputNeuron
-
-    def stimulate(self, signal):
-        def clamp(num):
-            if num > 1:
-                return 1
-            elif num < 0:
-                return 0
-            else:
-                return num
-
-        # Only allow a percentage of the signal through
-        adjustedSignal = signal * self.weight
-        adjustedSignal = clamp(adjustedSignal)
-        self.outputNeuron.accumulate(adjustedSignal)
-
-
-class Neuron:
-    def __init__(self, activation=None):
-        self.activation = activation
-        self.synapses = []
-        if activation is None:
-            self.activation = random.uniform(0, 1)
-
-        self.accumulatedSignal = float(0)
-
-    def attach(self, layer):
-        for neuron in layer.neurons:
-            # maxWeight = 1 / layer.size
-            randomWeight = random.uniform(0, 0.5)
-
-            synapse = Synapse(randomWeight, neuron)
-
-            self.synapses.append(synapse)
-
-    def accumulate(self, signal):
-        self.accumulatedSignal = self.accumulatedSignal + float(signal)
-
-    def process(self):
-        self.accumulatedSignal = 1 / (1 + np.exp(-self.accumulatedSignal))
-
-        if self.accumulatedSignal < self.activation:
-            # self.activation = min(1, self.activation + 0.001)
-            return
-
-        # self.activation = max(0, self.activation - 0.002)
-
-        splitSignal = self.accumulatedSignal / len(self.synapses)
-
-        for synapse in self.synapses:
-            synapse.stimulate(splitSignal)
-
-
-class Layer:
-    def __init__(self, neurons):
-        self.neurons = list(neurons)
-        self.size = len(self.neurons)
-
-    def process(self):
-        for i in range(0, self.size):
-            self.neurons[i].process()
+    # static function to return a random activation function
+    @staticmethod
+    def random_activation_function():
+        return random.choice([
+            NeuronV2.sigmoid,
+            NeuronV2.relu,
+            NeuronV2.tanh,
+            #NeuronV2.leaky_relu,
+            #NeuronV2.softmax,
+            #NeuronV2.linear,
+            NeuronV2.step,
+            #NeuronV2.gaussian,
+            #NeuronV2.identity,
+            #NeuronV2.binary_step,
+            #NeuronV2.absolute,
+            #NeuronV2.hard_sigmoid,
+            #NeuronV2.exponential,
+            NeuronV2.inverse,
+            #NeuronV2.sine,
+            #NeuronV2.cosine,
+            #NeuronV2.arctan,
+            #NeuronV2.softsign,
+            #NeuronV2.bent_identity,
+            #NeuronV2.softplus,
+            #NeuronV2.sinc,
+            #NeuronV2.gaussian_error,
+            #NeuronV2.exponential_linear_unit,
+            #NeuronV2.scaled_exponential_linear_unit,
+            #NeuronV2.logarithm,
+            #NeuronV2.square,
+            #NeuronV2.cube,
+            #NeuronV2.square_root
+            #NeuronV2.cube_root,
+            #NeuronV2.exponential,
+            #NeuronV2.logarithm,
+            #NeuronV2.logarithm_base_10,
+            #NeuronV2.logarithm_base_2
+        ])
 
     @staticmethod
-    def random(size):
-        neurons = [Neuron() for i in range(0, size)]
-        return Layer(neurons)
+    def sigmoid(x):
+        return 1 / (1 + np.exp(-x))
+    
+    @staticmethod
+    def relu(x):
+        return max(0, x)
 
+    @staticmethod
+    def tanh(x):
+        return np.tanh(x)
+    
+    @staticmethod
+    def leaky_relu(x):
+        return max(0.01 * x, x)
+    
+    @staticmethod
+    def softmax(x):
+        return np.exp(x) / np.sum(np.exp(x))
 
-class Net:
-    def __init__(self, inputs, outputs, layers=None):
-        self.inputs = inputs
-        self.outputs = outputs
-        if layers is None:
-            self.layers = self.randomLayers(inputs, outputs)
+    @staticmethod
+    def linear(x):
+        return x
+
+    @staticmethod    
+    def step(x):
+        return 1 if x > 0 else 0
+
+    @staticmethod
+    def gaussian(x):
+        return np.exp(-x ** 2)
+    
+    @staticmethod
+    def identity(x):
+        return x
+    
+    @staticmethod
+    def binary_step(x):
+        return 1 if x >= 0 else 0
+    
+    @staticmethod
+    def absolute(x):
+        return abs(x)
+    
+    @staticmethod
+    def hard_sigmoid(x):
+        return max(0, min(1, 0.2 * x + 0.5))
+    
+    @staticmethod
+    def inverse(x):
+        return 1 / x
+    
+    @staticmethod
+    def sine(x):
+        return np.sin(x)
+    
+    @staticmethod
+    def cosine(x):
+        return np.cos(x)
+    
+    @staticmethod
+    def arctan(x):
+        return np.arctan(x)
+    
+    @staticmethod
+    def softsign(x):
+        return x / (1 + abs(x))
+    
+    @staticmethod
+    def bent_identity(x):
+        return (np.sqrt(x ** 2 + 1) - 1) / 2 + x
+    
+    @staticmethod
+    def softplus(x):
+        return np.log(1 + np.exp(x))
+    
+    @staticmethod
+    def sinc(x):
+        return np.sin(x) / x
+    
+    @staticmethod
+    def gaussian_error(x):
+        return np.exp(-x ** 2) / 2
+    
+    @staticmethod
+    def exponential_linear_unit(x):
+        return x if x > 0 else np.exp(x) - 1
+    
+    @staticmethod
+    def logarithmic(x):
+        return np.log(1 + np.exp(x))
+    
+    @staticmethod
+    def square(x):
+        return x ** 2
+    
+    @staticmethod
+    def cube(x):
+        return x ** 3
+
+    @staticmethod
+    def scaled_exponential_linear_unit(x):
+        return x if x > 0 else 0.01 * (np.exp(x) - 1)
+    
+    @staticmethod
+    def square_root(x):
+        return np.sqrt(abs(x))
+    
+    @staticmethod
+    def cube_root(x):
+        return np.sign(x) * np.abs(x) ** (1 / 3)
+    
+    @staticmethod
+    def exponential(x):
+        return np.exp(x)
+    
+    @staticmethod
+    def logarithm(x):
+        return np.log(abs(x))
+    
+    @staticmethod
+    def logarithm_base_10(x):
+        return np.log10(abs(x))
+    
+    @staticmethod
+    def logarithm_base_2(x):
+        return np.log2(abs(x))
+
+class LayerV2:
+    def __init__(self, num_neurons, num_inputs_per_neuron, activation_fn=None):
+        self.num_neurons = num_neurons
+        self.neurons = []
+        self.size = num_neurons
+        self.num_inputs_per_neuron = num_inputs_per_neuron
+        if activation_fn is None:
+            activation_fn = NeuronV2.random_activation_function()
+        for i in range(num_neurons):
+            neuron = NeuronV2(num_inputs_per_neuron, activation_fn)
+            self.neurons.append(neuron)
+
+    def forward(self, inputs):
+        outputs = []
+        for neuron in self.neurons:
+            outputs.append(neuron.forward(inputs))
+        return outputs
+    
+    def clone(self):
+        cloned_layer = LayerV2(0, 0)
+
+        cloned_layer.num_neurons = self.num_neurons
+        cloned_layer.size = self.size
+        cloned_layer.num_inputs_per_neuron = self.num_inputs_per_neuron
+
+        for neuron in self.neurons:
+            cloned_layer.neurons.append(neuron.clone())
+        
+        return cloned_layer
+
+class NetV2:
+    def __init__(self, num_inputs, num_outputs, hidden_layers=None):
+        self.num_inputs = num_inputs
+        self.num_outputs = num_outputs
+        if hidden_layers is None:
+            self.hidden_layers = self.randomLayers(num_inputs, num_outputs)
         else:
-            self.layers = layers
+            self.hidden_layers = hidden_layers
 
-    def randomLayers(self, inputs, outputs):
+    def randomLayers(self, inputs, outputs, min_layers=1, max_layers=20, min_neurons=1, max_neurons=20):
         config = []
 
-        prevLayer = None
-        layerCount = int(random.random() * 10) + 2
+        prevLayerSize = inputs
+        layerCount = int(random.random() * (max_layers - min_layers)) + min_layers
         for i in range(0, layerCount):
             layer = None
-            if i == 0:
-                layerSize = inputs
-                layer = Layer.random(layerSize)
-            elif i == layerCount - 1:
+            if i == layerCount - 1:
                 layerSize = outputs
-                layer = Layer.random(layerSize)
+                layer = LayerV2(layerSize, prevLayerSize, NeuronV2.sigmoid)
             else:
-                layerSize = int(random.random() * 16) + 3
-                layer = Layer.random(layerSize)
-
-            if prevLayer is not None:
-                for neuron in prevLayer.neurons:
-                    neuron.attach(layer)
+                layerSize = int(random.random() * (max_neurons - min_neurons)) + min_neurons
+                layer = LayerV2(layerSize, prevLayerSize)
 
             config.append(layer)
-            prevLayer = layer
+            prevLayerSize = layerSize
 
         return config
 
     def process(self, inputs):
-        for layer in self.layers:
+        last_layer = None
+        current_inputs = inputs
+        for hidden_layer in self.hidden_layers:
+            current_inputs = hidden_layer.forward(current_inputs)
+            last_layer = hidden_layer
+
+        # verify last later is sigmoid
+        if last_layer is not None:
+            for neuron in last_layer.neurons:
+                if neuron.activation_fn != NeuronV2.sigmoid:
+                    print("ERROR: Last layer is not sigmoid")
+                    exit(1)
+
+        return current_inputs
+    
+    def clone(self):
+        # create copy of hidden layers
+        new_hidden_layers = []
+        for layer in self.hidden_layers:
+            new_layer = layer.clone()
+            new_hidden_layers.append(new_layer)
+        
+        new_net = NetV2(self.num_inputs, self.num_outputs, new_hidden_layers)
+
+        return new_net
+
+    def mutate(self):
+        # Builds a new network with the following mutations:
+        # 1% chance to add a new layer or remove an existing layer
+        # 5% chance to add a new neuron to a layer or remove an existing neuron from a layer
+        # 1% chance per each neuron to change the activation function
+        # 1% chance to change the activation function of a layer
+        # 5% chance per each neuron weight to change itself by 0.5% at most
+        # 5% chance per each neuron to change the bias by 0.5% at most
+
+        new_net = self.clone()
+
+#        if random.random() < 0.01:
+#            # Add or remove a layer
+#            if random.random() < 0.5:
+#                # Add a layer
+#                new_net.hidden_layers.append(LayerV2(int(random.random() * 16) + 3, new_net.hidden_layers[-1].size))
+#            else:
+#                # Remove a layer
+#                if len(new_net.hidden_layers) > 1:
+#                    new_net.hidden_layers.pop()
+
+        for layer in new_net.hidden_layers:
+            #if random.random() < 0.05:
+            #    # Add or remove a neuron
+            #    if random.random() < 0.5:
+            #        # Add a neuron
+            #        layer.neurons.append(NeuronV2(layer.neurons[0].weights.size))
+            #    else:
+            #        # Remove a neuron
+            #        if len(layer.neurons) > 1:
+            #            layer.neurons.pop()
+
+            # only change if not the last layer
+            is_last_layer = layer == new_net.hidden_layers[-1]
+            if random.random() < 0.01 and not is_last_layer:
+                # Change the activation function of the layer
+                layer.activation_fn = NeuronV2.random_activation_function()
+                for neuron in layer.neurons:
+                    neuron.activation_fn = layer.activation_fn
+
             for neuron in layer.neurons:
-                neuron.accumulatedSignal = 0
+                if random.random() < 0.01 and not is_last_layer:
+                    # Change the activation function
+                    neuron.activation_fn = NeuronV2.random_activation_function()
+                
+                for i in range(neuron.weights.size):
+                    if random.random() < 0.05:
+                        # Change the weight
+                        # increase or decrease by 0.5% of the existing value at most
+                        neuron.weights[i] = neuron.weights[i] * (1 + random.random() * 0.005)
 
-        for i in range(0, len(inputs)):
-            self.layers[0].neurons[i].accumulate(inputs[i])
+                if random.random() < 0.05:
+                    # mutate the bias
+                    # increase or decrease by 0.5% of the existing value at most
+                    neuron.bias = neuron.bias * (1 + random.random() * 0.005)
 
-        for layer in self.layers:
-            layer.process()
-
-        output = []
-        for neuron in self.layers[-1].neurons:
-            output.append(neuron.accumulatedSignal)
-
-        return output
+        return new_net

@@ -1,6 +1,6 @@
 import pygame
 import logging
-from ESnake import Direction, AppScreen, App, Level
+from ESnake import Direction, AppScreen, App, Level, Food, Snake, Wall
 
 
 class PyInGameScreenEngine:
@@ -27,23 +27,17 @@ class PyInGameScreenEngine:
             elif event.key == pygame.K_RIGHT:
                 self.logger.debug("Requested Direction changed to Right")
                 self.__level.player.requestedDirection = Direction.right
-            elif event.key == pygame.K_UP:
-                self.logger.debug("Requested Direction changed to Up")
-                self.__level.player.requestedDirection = Direction.up
-            elif event.key == pygame.K_DOWN:
-                self.logger.debug("Requested Direction changed to Down")
-                self.__level.player.requestedDirection = Direction.down
             elif event.key == pygame.K_ESCAPE:
                 self.logger.debug("esc pressed, switch to post game")
                 app.screen = AppScreen.PostGame
-            elif event.key == pygame.K_KP_MINUS:
+            elif event.key == pygame.K_LEFTBRACKET:
                 if not hasattr(self.__level, 'maxBotCount'):
                     setattr(self.__level, 'maxBotCount',
                             self.__level.initialBotCount)
                 self.__level.maxBotCount = max(1, self.__level.maxBotCount - 1)
                 self.logger.debug("Reduced bot count to " +
                                   str(self.__level.maxBotCount))
-            elif event.key == pygame.K_KP_PLUS:
+            elif event.key == pygame.K_RIGHTBRACKET:
                 if not hasattr(self.__level, 'maxBotCount'):
                     setattr(self.__level, 'maxBotCount',
                             self.__level.initialBotCount)
@@ -147,7 +141,7 @@ class PyInGameScreenEngine:
             elif isHeadSection:
                 fillColor = app.engine.style.playerHeadColor
                 player = self.__level.player
-                if player.previousRequestedDirection != player.direction:
+                if player.previousRequestedDirection is not None and player.previousRequestedDirection != player.direction:
                     fillColor = (184, 92, 0)
                     if player.direction == Direction.left or player.direction == Direction.right:
                         drawLocation.inflate_ip(-5, 0)
@@ -211,23 +205,25 @@ class PyInGameScreenEngine:
     def drawBot(self, app, pyscreen, now, bot):
         if bot.isDead:
             # draw bot score
-            string = f"{bot.score}"
-            text = self.__debugFont.render(
-                string, True, (255, 0, 0), (50, 0, 0))
+            if bot.score > 3:
+                string = f"{bot.score}"
+                text = self.__debugFont.render(
+                    string, True, (255, 0, 0), (50, 0, 0))
 
-            drawLocation = pygame.Rect(self.getLocationRect(
-                app, pyscreen, bot.segments[0].location))
+                drawLocation = pygame.Rect(self.getLocationRect(
+                    app, pyscreen, bot.segments[0].location))
 
-            textRect = text.get_rect()
-            textRect.topleft = (drawLocation[0], drawLocation[1])
+                textRect = text.get_rect()
+                textRect.topleft = (drawLocation[0], drawLocation[1])
 
-            pyscreen.blit(text, textRect)
+                pyscreen.blit(text, textRect)
             return
 
-        timeSinceLastAte = now - bot.lastTimeAte
+        bot_color = bot.controller.color
 
         playerSegmentCount = len(bot.segments)
         for index, segment in enumerate(reversed(bot.segments)):
+            index_percent = max(0.5, index / playerSegmentCount)
             playerLocation = segment.location
             realIndex = (playerSegmentCount - index - 1)
 
@@ -239,15 +235,12 @@ class PyInGameScreenEngine:
             fillColor = None
 
             if isHeadSection:
-                fillColor = app.engine.style.botHeadColor
-                if bot.previousRequestedDirection != bot.direction:
-                    fillColor = (184, 92, 0)
-                    if bot.direction == Direction.left or bot.direction == Direction.right:
-                        drawLocation.inflate_ip(-5, 0)
-                    elif bot.direction == Direction.up or bot.direction == Direction.down:
-                        drawLocation.inflate_ip(0, -5)
+                fillColor = bot_color
+                
+                fillColor = (fillColor[0] * bot.energy, fillColor[1] * bot.energy, fillColor[2] * bot.energy)
             else:
-                fillColor = app.engine.style.botBodyColor
+                fillColor = bot_color
+                fillColor = (fillColor[0] * index_percent, fillColor[1] * index_percent, fillColor[2] * index_percent)
 
             if not isHeadSection:
                 drawLocation.inflate_ip(-4, -4)
@@ -260,6 +253,94 @@ class PyInGameScreenEngine:
         # energy is a number between 0 and 1
         drawLocation[2] = drawLocation[2] * bot.energy
         pygame.draw.rect(pyscreen, fillColor, drawLocation, 0)
+
+        # draw bot view locations, using green circles
+        if app.debug.botViewLocations:
+            if bot.viewLocations is not None:
+                # different color for each location
+                for index, location in enumerate(bot.viewLocations):
+                    drawLocation = pygame.Rect(
+                        self.getLocationRect(app, pyscreen, location))
+                    drawLocation.inflate_ip(-4, -4)
+
+                    contents = bot.viewContents[index]
+
+                    color = (255, 255, 255)
+
+                    if contents is None:
+                        # nothing, probably outside of bounds
+                        # dark grey
+                        color = (100, 100, 100)
+                    elif contents is bot:
+                        # self
+                        # cyan
+                        color = (0, 255, 255)
+                    elif isinstance(contents, Food):
+                        # Food to eat
+                        # green
+                        color = (0, 255, 0)
+                    elif isinstance(contents, Snake):
+                        # other ai snek
+                        # red
+                        color = (255, 0, 0)
+                    elif contents is self.level.player:
+                        # other snek, player snek
+                        # orange red
+                        color = (255, 69, 0)
+                    elif isinstance(contents, Wall):
+                        # wall
+                        # pink
+                        color = (255, 0, 255)
+                    else:
+                        raise "invalid contents"                    
+
+                    pygame.draw.circle(pyscreen, color, drawLocation.center, 2)
+        
+            # if the bot was created within the last 2 seconds, draw a little white circle in the middle of it
+            adj_time = self.level.timeOffset + now
+            bst = bot.startTime
+            if bst is None:
+                bst = adj_time
+            if adj_time - bst < 2000:
+                drawLocation = pygame.Rect(self.getLocationRect(app, pyscreen, bot.segments[0].location))
+                drawLocation.inflate_ip(-2, -2)
+                pygame.draw.circle(pyscreen, (255, 255, 255), drawLocation.center, 2)
+
+            # draw little triangle on bot head pointing in direction of movement
+            #drawLocation = pygame.Rect(
+            #    self.getLocationRect(app, pyscreen, bot.segments[0].location))
+            #drawLocation.inflate_ip(-4, -4)
+#
+            #center = drawLocation.center
+            #width = drawLocation.width
+            #height = drawLocation.height
+#
+            #if bot.direction == Direction.up:
+            #    points = [
+            #        (center[0], center[1] - height / 2),
+            #        (center[0] - width / 2, center[1] + height / 2),
+            #        (center[0] + width / 2, center[1] + height / 2)
+            #    ]
+            #elif bot.direction == Direction.down:
+            #    points = [
+            #        (center[0], center[1] + height / 2),
+            #        (center[0] - width / 2, center[1] - height / 2),
+            #        (center[0] + width / 2, center[1] - height / 2)
+            #    ]
+            #elif bot.direction == Direction.left:
+            #    points = [
+            #        (center[0] - width / 2, center[1]),
+            #        (center[0] + width / 2, center[1] - height / 2),
+            #        (center[0] + width / 2, center[1] + height / 2)
+            #    ]
+            #elif bot.direction == Direction.right:
+            #    points = [
+            #        (center[0] + width / 2, center[1]),
+            #        (center[0] - width / 2, center[1] - height / 2),
+            #        (center[0] - width / 2, center[1] + height / 2)
+            #    ]
+#
+            #pygame.draw.polygon(pyscreen, (255, 0, 0), points)
 
     def drawFood(self, app, pyscreen):
         for food in self.__level.foods:
@@ -277,18 +358,16 @@ class PyInGameScreenEngine:
 
         rightSideBarWidth = screenrect.right - playRectangle.right
 
-        scoreHeaderText = self.__scoreFont.render(
-            str("Score"), True, app.engine.style.inGameScoreTextColor)
+        scoreHeaderText = self.__scoreFont.render(str("Score"), True, app.engine.style.inGameScoreTextColor)
         scoreHeaderTextLocation = scoreHeaderText.get_rect()
 
         scoreHeaderLocation = pygame.Rect(
             playRectangle.right, playRectangle.top, rightSideBarWidth, scoreHeaderTextLocation.height)
 
-        pygame.draw.rect(
-            pyscreen, app.engine.style.inGameScoreHeaderBackgroundColor, scoreHeaderLocation)
+        pygame.draw.rect(pyscreen, app.engine.style.inGameScoreHeaderBackgroundColor, scoreHeaderLocation)
 
-        scoreHeaderTextLocation.midright = scoreHeaderLocation.midright
-        scoreHeaderTextLocation.x -= 5
+        scoreHeaderTextLocation.midleft = scoreHeaderLocation.midleft
+        scoreHeaderTextLocation.x += 2
 
         pyscreen.blit(scoreHeaderText, scoreHeaderTextLocation)
 
@@ -296,31 +375,41 @@ class PyInGameScreenEngine:
             str(self.__level.player.score), True, app.engine.style.inGameScoreTextColor)
 
         scoreTextLocation = scoreText.get_rect()
-        scoreTextLocation.topright = scoreHeaderTextLocation.bottomright
+        scoreTextLocation.topleft = scoreHeaderTextLocation.bottomleft
 
         pyscreen.blit(scoreText, scoreTextLocation)
 
-        bestBotScore = 0
-        if len(self.__level.bestBots) > 0:
-            bestBotScore = int(self.__level.bestBots[0].score)
-        botscoreText = self.__scoreFont.render(
-            str(bestBotScore), True, app.engine.style.inGameScoreTextColor)
+        # Draw all best bot scores.
+        # The scores should start on the left side of the right side bar, and be listed vertically.
+        # Each entry should have a square with the bot controller color on the left and the score to the right of it.
+        # we can only stack about MAX_BOT_ROWS entries per column, so we need to make multiple columns if there are more than MAX_BOT_ROWS entries.
+        MAX_BOT_ROWS = 40
+        botscoreTextLocation = scoreTextLocation
+        last_column_location = None
+        for index, bot in enumerate(self.__level.bestBots):
+            # Draw the bot color square
+            bot_color = bot.controller.color
+            bot_color_rect = pygame.Rect(botscoreTextLocation.left, botscoreTextLocation.top + 22, 20, 20)
 
-        botscoreTextLocation = botscoreText.get_rect()
-        botscoreTextLocation.topright = scoreTextLocation.bottomright
+            if index % MAX_BOT_ROWS == 0:
+                # we need to start a new column
+                if last_column_location is None:
+                    # this is the first column
+                    last_column_location = bot_color_rect
+                else:
+                    # this is not the first column
+                    last_column_location = last_column_location.move(40, 0)
+                    bot_color_rect.topleft = last_column_location.topleft
 
-        pyscreen.blit(botscoreText, botscoreTextLocation)
+            pygame.draw.rect(pyscreen, bot_color, bot_color_rect, 0)
 
-        string = f"{self.__level.player.speed} + {self.__level.player.speedBoost:0.2f} t/s"
-        text = self.__statsFont.render(
-            string, True, app.engine.style.inGameStatsTextColor)
+            # Draw the bot score
+            botscoreText = self.__scoreFont.render(str(int(bot.score)), True, app.engine.style.inGameScoreTextColor)
+            botscoreTextLocation = botscoreText.get_rect()
+            botscoreTextLocation.topleft = bot_color_rect.topright
+            pyscreen.blit(botscoreText, botscoreTextLocation)
 
-        textRect = text.get_rect()
-        textRect.topright = botscoreTextLocation.bottomright
-
-        textRect.top += 5
-
-        pyscreen.blit(text, textRect)
+            botscoreTextLocation = bot_color_rect
 
     def getTileSize(self, pyscreen):
         size = pyscreen.get_size()
