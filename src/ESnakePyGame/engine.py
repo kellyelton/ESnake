@@ -1,10 +1,11 @@
 import pygame
 import logging
 import cProfile
-import pickle # 🥒
+import pickle  # 🥒
 import os
 from ESnake import loadStyle, hasFunction, AppScreen, Level, App
 from . import PyLoadingScreenEngine, PyInGameScreenEngine, PyPostGameScreenEngine
+
 
 class PyGameEngine:
     def __init__(self):
@@ -38,11 +39,13 @@ class PyGameEngine:
         if app.config.fullscreen:
             self.logger.debug("Setting display to FullScreen")
 
-            pyscreen = pygame.display.set_mode(app.config.screenSize, pygame.FULLSCREEN)
+            pyscreen = pygame.display.set_mode(
+                app.config.screenSize, pygame.FULLSCREEN)
         else:
             pyscreen = pygame.display.set_mode(app.config.screenSize)
 
-        pygame.display.set_caption(app.name + f" - v{app.version[0]}.{app.version[1]}.{app.version[2]}")
+        pygame.display.set_caption(
+            app.name + f" - v{app.version[0]}.{app.version[1]}.{app.version[2]}")
 
         clock = pygame.time.Clock()
 
@@ -53,12 +56,11 @@ class PyGameEngine:
                 self.configureScreenEngine(app)
                 self.processEvents(app)
                 engine = self.screenEngine
-                #cProfile.runctx('engine.update(app)', globals(), locals())
                 engine.update(app)
                 self.draw(app, pyscreen)
 
-                # max fps 60
-                clock.tick_busy_loop(app.config.maxfps)
+                # max fps
+                clock.tick(app.config.maxfps)
         finally:
             self.logger.debug("exiting run loop")
 
@@ -69,23 +71,21 @@ class PyGameEngine:
                     self.saveGame(app)
 
                 app.stop()
-            elif self._screenEngine == None:
-                self.logger.debug(f"skipping event {event}");
-            else:
-                self.logger.debug(f"processing event {event}");
+            elif self._screenEngine is not None:
                 self._screenEngine.processEvent(app, event)
 
     def draw(self, app, pyscreen):
-        if self._screenEngine == None:
+        if self._screenEngine is None:
             pass
         else:
             self._screenEngine.draw(app, pyscreen)
 
-        ## flip buffer
+        # flip buffer
         pygame.display.flip()
 
     def configureScreenEngine(self, app):
-        if self._previousAppScreen == app.screen: return
+        if self._previousAppScreen == app.screen:
+            return
 
         self._previousAppScreen = app.screen
 
@@ -96,7 +96,7 @@ class PyGameEngine:
             return PyLoadingScreenEngine(app)
         elif app.screen == AppScreen.InGame:
             level = self.loadSaveGame()
-            
+
             if level is None:
                 level = Level.default()
 
@@ -111,7 +111,7 @@ class PyGameEngine:
             return PyPostGameScreenEngine(app, level)
         else:
             raise Exception("Not Implemented")
-    
+
     def saveGame(self, app: App):
         if not isinstance(self._screenEngine, PyInGameScreenEngine):
             self.logger.warn(f"Not in game, can't save game")
@@ -124,10 +124,11 @@ class PyGameEngine:
 
         with open('autosave', 'wb') as file:
             file.write(bytes)
-    
+
     def loadSaveGame(self):
         try:
-            if not os.path.isfile("autosave"): return None
+            if not os.path.isfile("autosave"):
+                return None
 
             saveBytes = None
             with open('autosave', 'rb') as file:
@@ -148,10 +149,11 @@ class PyGameEngine:
                 pass
 
         return None
-    
+
     def deleteSaveGame(self):
         try:
-            if not os.path.isfile("autosave"): return
+            if not os.path.isfile("autosave"):
+                return
 
             os.remove("autosave")
         except FileNotFoundError:

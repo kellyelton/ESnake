@@ -1,8 +1,10 @@
 import logging
+
 from . import Direction, GameObject, SnakeSegment
 
+
 class Snake(GameObject):
-    def __init__(self, speed, location, tags, controller = None):
+    def __init__(self, speed, location, tags, controller=None):
         tags.append("snake")
 
         super().__init__(tags)
@@ -13,90 +15,98 @@ class Snake(GameObject):
         self.foodScore = 0
         self.energy = 1
         self.startTime = None
-        self.direction: Direction = None
-        self.previousRequestedDirection: Direction = None
-        self.requestedDirection: Direction = None
+        self.direction: Direction = Direction.random()
+        self.previousRequestedDirection: Direction = Direction.none()
+        self.requestedDirection: Direction = Direction.none()
         self.lastTimeMoved = 0
         self.lastTimeAte = 0
+        self.hunger = 0
         self.deathTime = 0
         self.isDead = False
-        self.tilesTouched = set()
+        self.killCount = 0
         self.controller = controller
-        self.segments = [SnakeSegment(self, location, None)]
+        self.segments = [SnakeSegment(self, location, Direction.none())]
+        self.viewLocations: list = None
+        self.viewLocationsCount = 0
+        self.viewContents: list = None
+
     def update(self, app, time, level):
+        if self.viewLocations is None:
+            self.update_view_locations(level)
         if not self.isDead:
-            if self.startTime == None:
+            if self.startTime is None:
                 self.startTime = time
 
-            if not self.controller == None:
+            if self.controller is not None:
                 self.controller.update(app, time, level, self)
 
             runSeconds = (time - self.startTime) / 1000
             self.speedBoost = runSeconds / 12
-            adjustedSpeed = self.speed# + self.speedBoost
+            adjustedSpeed = self.speed  # + self.speedBoost
 
             msSinceLastMoved = time - self.lastTimeMoved
 
             if msSinceLastMoved >= adjustedSpeed:
                 self.lastTimeMoved = time
-                if not self.controller == None:
+                if self.controller is not None:
                     self.controller.move(app, time, level, self)
                 self.move(app, time, level)
 
     def move(self, app, time, level):
-        self.tilesTouched.add(self.segments[0].location)
+        energyDrain = 0.001
 
-        self.energy = max(0, self.energy - 0.002)
+        self.energy = max(0, min(1, self.energy - energyDrain))
 
-        if self.direction != None: # consume extra energy when moving
-            self.energy = max(0, self.energy - 0.01)
-
-        if self.energy == 0 and "player" not in self.tags:
+        if self.energy <= 0 and "player" not in self.tags:
             self.kill(app, time, level, "ran out of energy")
             return
 
         # Change course
-        if self.requestedDirection != None:
-            newDirection = self.previousRequestedDirection = self.requestedDirection
-            self.requestedDirection = None
+        if self.requestedDirection != Direction.none():
+            self.previousRequestedDirection = self.requestedDirection
 
-            # Switch directions only if we're not already going that direction
-            if self.direction != newDirection:
-                # Don't allow reversing if we have a tail
-                if len(self.segments) > 1:
-                    if self.direction.opposite == newDirection:
-                        #self.logger.debug(f"Can't move {newDirection}, while player is moving {self.playerDirection}")
-                        newDirection = self.direction # cancel out change
+            if self.requestedDirection == Direction.left():
+                newDirection = self.direction.relativeLeft
+            elif self.requestedDirection == Direction.right():
+                newDirection = self.direction.relativeRight
+            else:
+                raise Exception("Invalid requested direction")
 
-                self.direction = newDirection
+            self.direction = newDirection
+            self.requestedDirection = Direction.none()
         else:
-            self.previousRequestedDirection = self.direction
+            self.previousRequestedDirection = Direction.none()
 
-        if self.direction == None: return
+        if self.direction == Direction.none():
+            raise Exception("No direction set")
 
         oldHead = self.segments[0].location
         newHead = oldHead
         removeTail = True
 
-        if self.direction == Direction.left:
+        if self.direction == Direction.left():
             newHead = (oldHead[0] - 1, oldHead[1])
-        elif self.direction == Direction.right:
+        elif self.direction == Direction.right():
             newHead = (oldHead[0] + 1, oldHead[1])
-        elif self.direction == Direction.up:
+        elif self.direction == Direction.up():
             newHead = (oldHead[0], oldHead[1] - 1)
-        elif self.direction == Direction.down:
+        elif self.direction == Direction.down():
             newHead = (oldHead[0], oldHead[1] + 1)
 
-        if level.isOutsideWall(newHead): return
+        if level.isOutsideWall(newHead):
+            self.kill(app, time, level, "lost outside map...")
+            return
 
         newHeadContents = level.getContents(newHead)
 
-        if(newHeadContents != None):
+        if newHeadContents is not None:
             if "food" in newHeadContents.tags:
                 self.foodScore += 1
-                self.logger.info(f"eating food. new food score {self.foodScore}")
+                self.logger.info(
+                    f"eating food. new food score {self.foodScore}")
                 self.lastTimeAte = time
-                self.energy = min(1, self.energy + 0.1)
+                self.hunger = 0
+                self.energy = 1
                 removeTail = False
                 level.moveFood(newHeadContents)
             elif "snake" in newHeadContents.tags:
@@ -104,10 +114,12 @@ class Snake(GameObject):
                     self.logger.info(f"{self} ran into itself")
                 else:
                     self.logger.info(f"{self} ran into {newHeadContents}")
-                    if newHead == newHeadContents.segments[0].location: # hit other snakes head
+                    # hit other snakes head
+                    if newHead == newHeadContents.segments[0].location:
                         newHeadContents.kill(app, time, level, self)
-                    else: # hit other snakes tail
-                        self.logger.info(f"{newHeadContents} scored a kill on {self}")
+                    else:  # hit other snakes tail
+                        self.logger.info(
+                            f"{newHeadContents} scored a kill on {self}")
 
                 self.kill(app, time, level, newHeadContents)
             elif "wall" in newHeadContents.tags:
@@ -123,28 +135,83 @@ class Snake(GameObject):
 
         previousSegmentDirection = self.direction
         for segment in self.segments:
-            if segment.direction == previousSegmentDirection: continue
+            if segment.direction == previousSegmentDirection:
+                continue
 
             tpd = segment.direction
 
             segment.direction = previousSegmentDirection
 
             previousSegmentDirection = tpd
-    
-    def kill(self, app, time, level, murderer):
-        if self.isDead: return
+        
+        self.update_view_locations(level)    
 
-        if self == level.player: return #don't kill player while we're debugging ai
+    def kill(self, app, time, level, murderer):
+        if self.isDead:
+            return
+
+        if self == level.player:
+            return  # don't kill player while we're debugging ai
+
+        if isinstance(murderer, Snake):
+            murderer.killCount = murderer.killCount + 1
 
         self.logger.debug(f"{self} killed: {murderer}.")
 
-        self.tileTouchCount = len(self.tilesTouched)
-        self.tilesTouched.clear()
-        self.tilesTouched = None
+        #self.tileTouchCount = len(self.tilesTouched)
+        #self.tilesTouched.clear()
+        #self.tilesTouched = None
         self.isDead = True
         self.deathTime = time
-        score = self.foodScore * 100
-        score += (self.tileTouchCount / (level.width * level.height)) * 1000 # Score for touching lots of tiles
-        if self.startTime != None:
-            score += score * ((self.deathTime - self.startTime) / 20000)
+        #tilePercent = (self.tileTouchCount / (level.width * level.height))
+        #tileScore = tilePercent * 50000  # Score for touching lots of tiles
+
+        #if self.tileTouchCount <= 5:
+        #    self.score = 0
+        #    return
+
+        foodScore = self.foodScore# * 1000
+
+        #killBonus = self.killCount * 1000
+
+        #ageScore = 0
+        #if self.startTime is not None:
+        #    ageScore = (self.deathTime - self.startTime) / 200
+
+        score = foodScore # + tileScore + ageScore + killBonus
+
         self.score = int(score)
+    
+    def update_view_locations(self, level):
+        head = self.segments[0].location
+        self.viewLocationsCount = 3
+        if self.direction == Direction.left():
+            self.viewLocations = [
+                (head[0] - 1, head[1]),
+                (head[0], head[1] + 1),
+                (head[0], head[1] - 1)
+            ]
+        elif self.direction == Direction.right():
+            self.viewLocations = [
+                (head[0] + 1, head[1]),
+                (head[0], head[1] - 1),
+                (head[0], head[1] + 1)
+            ]
+        elif self.direction == Direction.up():
+            self.viewLocations = [
+                (head[0], head[1] - 1),
+                (head[0] - 1, head[1]),
+                (head[0] + 1, head[1])
+            ]
+        elif self.direction == Direction.down():
+            self.viewLocations = [
+                (head[0], head[1] + 1),
+                (head[0] + 1, head[1]),
+                (head[0] - 1, head[1])
+            ]
+
+        self.viewContents = [
+            level.getContents(self.viewLocations[0]),
+            level.getContents(self.viewLocations[1]),
+            level.getContents(self.viewLocations[2])
+        ]

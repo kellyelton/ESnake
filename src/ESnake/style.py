@@ -16,7 +16,7 @@ class Style:
         self.gameBackgroundColor = (0, 0, 0)
         self.inGameWallColor = mainBorderColor
         self.inGameScoreTextColor = (255, 255, 255)
-        self.inGameScoreFontSize = 40
+        self.inGameScoreFontSize = 14
         self.inGameScoreFont = self.getResourcePath("Fonts/Alata-Regular.ttf")
         self.inGameScoreHeaderBackgroundColor = mainBorderColor
         self.inGameStatsTextColor = (75, 75, 75)
