@@ -127,7 +127,7 @@ class Level:
                                     )
                                     self.bestBots = self.bestBots[:160 * 2]
 
-                                    if i == 0:
+                                    if i == 0 and False:
                                         # send me an email with the newest bot serialized to json
 
                                         # convert bot to json
