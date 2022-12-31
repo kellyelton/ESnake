@@ -2,9 +2,11 @@ import random
 import logging
 import numpy as np
 import smtplib, ssl, json
+import threading
+import time
 from random import randint
 from . import updateHighScore, AppScreen, Snake, Food, Wall, GameObject
-from .controllers import Dylan
+from .controllers import Dylan, Automatic
 
 
 class Level:
@@ -43,6 +45,10 @@ class Level:
             snake = Snake(speed, location, ["bot"], Dylan())
             self.updateLocation(snake)
             self.bots.append(snake)
+        
+        self.autobot = Snake(speed, self.randomEmptyLocation, ["bot", "auto"], Automatic())
+        self.updateLocation(self.autobot)
+        self.bots.append(self.autobot)
 
         self.startTime: int = None
 
@@ -84,7 +90,13 @@ class Level:
         return location
 
     def update(self, app, time):
+        self.initialFoodCount = 20
+        while len(self.foods) > self.initialFoodCount:
+            self.foods.pop()
         time = time + self.timeOffset
+
+        if self.startTime is None:
+            self.startTime = time
 
         self.lastUpdateTime = time
 
@@ -114,66 +126,23 @@ class Level:
                 if msSincePlayerDied >= 500:
                     self.logger.debug("done with death delay")
 
-                    if bot.score > 3:
+                    if bot.score > 1:
                         if len(self.bestBots) == 0:
                             self.bestBots.append(bot)
                         else:
                             for i in range(0, len(self.bestBots)):
                                 if bot.score >= self.bestBots[i].score:
                                     self.bestBots.insert(i, bot)
+                                    # bot name, aka, type of controller
+                                    botName = bot.controller.__class__.__name__
                                     self.logger.info(
-                                        f"Bot entered {i + 1} place " +
+                                        f"Bot '{botName} entered {i + 1} place " +
                                         f"with score {bot.score}"
                                     )
                                     self.bestBots = self.bestBots[:160 * 2]
 
-                                    if i == 0 and False:
-                                        # send me an email with the newest bot serialized to json
-
-                                        # convert bot to json
-                                        # exclude Logger
-                                        botJson = ""
-                                        
-                                        from email.mime.text import MIMEText
-                                        from email.mime.multipart import MIMEMultipart
-
-                                        sender_email = ""
-                                        receiver_email = ""
-
-                                        message = MIMEMultipart("alternative")
-                                        message["Subject"] = f'New Best Bot {bot.score}'
-                                        message["From"] = sender_email
-                                        message["To"] = receiver_email
-
-                                        # Create the plain-text and HTML version of your message
-                                        text = f"""\
-                                        New Best Bot {bot.score}"""
-                                        html = f"""\
-                                        <html>
-                                        <body>
-                                            <p>New Best Bot {bot.score}</p>
-                                            <p>{botJson}</p>
-                                        </body>
-                                        </html>
-                                        """
-
-                                        # Turn these into plain/html MIMEText objects
-                                        part1 = MIMEText(text, "plain")
-                                        part2 = MIMEText(html, "html")
-
-                                        # Add HTML/plain-text parts to MIMEMultipart message
-                                        # The email client will try to render the last part first
-                                        message.attach(part1)
-                                        message.attach(part2)
-
-                                        # Create secure connection with server and send email
-                                        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-                                            server.login("", "")
-                                            server.sendmail(
-                                                sender_email, receiver_email, message.as_string()
-                                            )
-
-                                            server.quit()
+                                    if i == 0:
+                                        self.sendHighScoreEmailInBackground(bot, time)
 
                                     break
 
@@ -190,6 +159,14 @@ class Level:
             diff = self.maxBotCount - botLength
             has_best_bots = len(self.bestBots) > 0
 
+            # make sure that there's at least 1 best bot that's not an automatic bot
+            if has_best_bots:
+                for bot in self.bestBots:
+                    if not isinstance(bot.controller, Automatic):
+                        break
+                else:
+                    has_best_bots = False
+
             for i in range(0, diff):
                 # if best bot count is 0, 100% chance to create a new bot
                 # if best bot count is maxed at 100, 5% chance to create a new bot
@@ -197,8 +174,12 @@ class Level:
 
                 create_new_bot_chance = 1.0 - (0.95 * (len(self.bestBots) / 100))
 
-                if random.random() > create_new_bot_chance:
+                if not has_best_bots:
+                    newController = Dylan()
+                elif random.random() > create_new_bot_chance:
                     random_best = random.choice(self.bestBots)
+                    while isinstance(random_best.controller, Automatic):
+                        random_best = random.choice(self.bestBots)
                     newController = Dylan(random_best.controller)
                 else:
                     newController = Dylan()
@@ -208,6 +189,16 @@ class Level:
                 self.bots.append(newBot)
 
                 self.refreshOccupiedLocations()
+        
+        # add autobot if it died and isn't int he bot list
+        if self.autobot not in self.bots:
+            # make new autobot
+            self.autobot = Snake(self.autobot.speed, self.randomEmptyLocation, ["bot", "auto"], Automatic())
+            self.updateLocation(self.autobot)
+            self.bots.append(self.autobot)
+
+            self.refreshOccupiedLocations()
+
 
     def respawnBest(self):
         if len(self.bestBots) == 0:
@@ -309,3 +300,66 @@ class Level:
 
     def moveFood(self, food):
         food.location = self.randomEmptyLocation
+    
+    def sendHighScoreEmailInBackground(self, bot: Snake, current_time):
+        return
+        thread = threading.Thread(target=self.sendHighScoreEmail, args=(bot, current_time,))
+        thread.start()
+
+    def sendHighScoreEmail(self, bot: Snake, current_time):
+        # send me an email with the newest bot serialized to json
+
+        botName = bot.controller.__class__.__name__
+
+        # convert bot to json
+        # exclude Logger
+        botJson = ""
+        
+        from email.mime.text import MIMEText
+        from email.mime.multipart import MIMEMultipart
+
+        sender_email = ""
+        receiver_email = ""
+
+        message = MIMEMultipart("alternative")
+        message["Subject"] = f'New Best Bot {botName} {bot.score}'
+        message["From"] = sender_email
+        message["To"] = receiver_email
+
+        # runtime
+
+        runtime = current_time - self.startTime
+        formatted_time = time.strftime("%H:%M:%S", time.gmtime(runtime))
+
+        # Create the plain-text and HTML version of your message
+        text = f"""\
+        New Best Bot {botName} {bot.score}\n
+        Time: {formatted_time}\
+        """
+        html = f"""\
+        <html>
+        <body>
+            <p>New Best Bot {bot.score}</p>
+            <p>Time: {formatted_time}</p>
+            <p>{botJson}</p>
+        </body>
+        </html>
+        """
+
+        # Turn these into plain/html MIMEText objects
+        part1 = MIMEText(text, "plain")
+        part2 = MIMEText(html, "html")
+
+        # Add HTML/plain-text parts to MIMEMultipart message
+        # The email client will try to render the last part first
+        message.attach(part1)
+        message.attach(part2)
+
+        # Create secure connection with server and send email
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login("", "")
+            server.sendmail(
+                sender_email, receiver_email, message.as_string()
+            )
+
+            server.quit()
