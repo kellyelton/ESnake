@@ -99,8 +99,6 @@ class PyInGameScreenEngine:
                 self.__lastDeadSectionAdded = now
                 self.__playerDeadSections += 1
 
-        timeSinceLastAte = now - self.__level.player.lastTimeAte
-
         playerSegmentCount = len(self.__level.player.segments)
         for index, segment in enumerate(reversed(self.__level.player.segments)):
             playerLocation = segment.location
@@ -112,79 +110,15 @@ class PyInGameScreenEngine:
             drawLocation = pygame.Rect(
                 self.getLocationRect(app, pyscreen, playerLocation))
 
-            msPerTile = self.__level.player.speed
-
-            timeSinceLastMove = now - self.__level.player.lastTimeMoved + self.__level.timeOffset
-
-            percentToMove = min(1, timeSinceLastMove / msPerTile)
-
-            if segment.direction == Direction.left:
-                xOffset = drawLocation.width * percentToMove
-                drawLocation[0] -= xOffset
-            elif segment.direction == Direction.right:
-                xOffset = drawLocation.width * percentToMove
-                drawLocation[0] += xOffset
-            elif segment.direction == Direction.up:
-                yOffset = drawLocation.height * percentToMove
-                drawLocation[1] -= yOffset
-            elif segment.direction == Direction.down:
-                yOffset = drawLocation.height * percentToMove
-                drawLocation[1] += yOffset
-
             fillColor = None
 
-            if self.__level.player.isDead:
-                if index >= playerSegmentCount - self.__playerDeadSections:
-                    fillColor = app.engine.style.playerDeadColor
-                else:
-                    fillColor = app.engine.style.playerBodyColor
-            elif isHeadSection:
+            if isHeadSection:
                 fillColor = app.engine.style.playerHeadColor
-                player = self.__level.player
-                if player.previousRequestedDirection is not None and player.previousRequestedDirection != player.direction:
-                    fillColor = (184, 92, 0)
-                    if player.direction == Direction.left or player.direction == Direction.right:
-                        drawLocation.inflate_ip(-5, 0)
-                    elif player.direction == Direction.up or player.direction == Direction.down:
-                        drawLocation.inflate_ip(0, -5)
             else:
                 fillColor = app.engine.style.playerBodyColor
 
             if not isHeadSection:
                 drawLocation.inflate_ip(-4, -4)
-
-            if realIndex == 0:
-                animationSegment1RunTime = 100
-                animationSegment2RunTime = 100
-
-                animationRunTime = animationSegment1RunTime + animationSegment2RunTime
-
-                animationStartTime = self.__level.player.lastTimeAte
-                animationEndTime = animationStartTime + animationRunTime
-
-                if now >= animationStartTime and now <= animationEndTime:
-                    animationSegment1StartTime = animationStartTime
-                    animationSegment2StartTime = animationSegment1StartTime + animationSegment1RunTime
-
-                    increase = 0
-
-                    if now >= animationSegment1StartTime and now < animationSegment2StartTime:
-                        # Animation Section 1
-                        increaseRatio = 3 / animationSegment1RunTime
-                        increase = (now - animationStartTime) * increaseRatio
-                    elif now >= animationSegment2StartTime and now < animationEndTime:
-                        # Animation Section 2
-                        increaseRatio = 2.5 / animationSegment2RunTime
-                        increase = (animationStartTime - now) * increaseRatio
-
-                    drawLocation.inflate_ip(increase, increase)
-
-            if self.__level.player.isDead:
-                timeSinceDead = now - self.__level.player.deathTime
-                increaseRatio = 4 / 200
-                increase = timeSinceDead * increaseRatio
-
-                drawLocation.inflate_ip(increase, increase)
 
             pygame.draw.rect(pyscreen, fillColor, drawLocation, 0)
 
