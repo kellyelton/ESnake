@@ -30,7 +30,7 @@ class Level1:
         self.bots = []
 
         if not hasattr(self, 'data_recorder'):
-            self.data_recorder = DataRecorder(self.bot_view_distance)
+            self.data_recorder = DataRecorder()
 
         self.snake_color = 'white'
         self.bot_color = 'blue'
@@ -39,13 +39,13 @@ class Level1:
 
         snake_start_pos = self.get_random_position()
         bot_start_pos = self.get_random_position()
-        self.snake = Snake(self.canvas, self.cell_size, snake_start_pos, self.snake_color)
+        self.snake = Snake(self.canvas, self.cell_size, snake_start_pos, self.bot_view_distance, self.snake_color)
         self.snake.pause()
         for i in range(self.bot_count):
             bot_start_pos = self.get_random_position()
-            bot_trainer = BotNetTrainer('data.csv', x_length, y_length, self.train_epochs)
+            bot_trainer = BotNetTrainer('data.csv', x_length, y_length, self.train_epochs, self.data_recorder.buffer_size)
             bot_trainer.load_and_train()
-            bot_snake = Snake(self.canvas, self.cell_size, bot_start_pos, self.bot_color)
+            bot_snake = Snake(self.canvas, self.cell_size, bot_start_pos, self.bot_view_distance, self.bot_color)
             bot_net = BotNet(self.canvas, self.cell_size, bot_snake, bot_trainer.model, self.bot_view_distance)
             bot = (bot_snake, bot_net, bot_trainer, 0)
             self.bots.append(bot)
@@ -79,10 +79,10 @@ class Level1:
         if self.snake.is_paused:
             return
         original_direction = self.snake.direction
-        original_position = self.snake.head
+        original_view = self.get_view(self.snake.head, self.snake.view_radius)
+
         self.snake.move()
         new_direction = self.snake.direction
-        new_position = self.snake.head
 
         # if snake head is on any foods, add segment and move food
         food_index = None
@@ -102,12 +102,23 @@ class Level1:
             self.snake.add_segment()
             new_food_location = self.get_random_position()
             self.foods[food_index].move(new_food_location)
-            self.data_recorder.record_move(self, original_position, new_position, original_direction, new_direction, False, True)
+            self.data_recorder.record_move(self, original_view, original_direction, new_direction, False, True)
         elif self.snake.check_collision(self):
-            self.data_recorder.record_move(self, original_position, new_position, original_direction, new_direction, True, False)
+            self.data_recorder.record_move(self, original_view, original_direction, new_direction, True, False)
             self.game_over()
         else:
-            self.data_recorder.record_move(self, original_position, new_position, original_direction, new_direction, False, False)
+            self.data_recorder.record_move(self, original_view, original_direction, new_direction, False, False)
+
+    def get_view(self, postion, radius):
+        view = []
+        for x in range(-radius, radius + 1):
+            for y in range(-radius, radius + 1):
+                if x == 0 and y == 0:
+                    continue
+                entity = self.at((postion[0] + x, postion[1] + y))
+                entity_num = BotNet.entity_to_float(entity, self)
+                view.append(entity_num)
+        return view
 
     def update_bots(self):
         for bot_index, bot in enumerate(self.bots):
@@ -147,7 +158,7 @@ class Level1:
                 bot_trainer.load_and_train()
 
                 bot_start_pos = self.get_random_position()
-                bot_snake = Snake(self.canvas, self.cell_size, bot_start_pos, self.bot_color)
+                bot_snake = Snake(self.canvas, self.cell_size, bot_start_pos, self.bot_view_distance, self.bot_color)
                 bot_net.bot = bot_snake
 
                 self.bots[bot_index] = (bot_snake, bot_net, bot_trainer, best_score)

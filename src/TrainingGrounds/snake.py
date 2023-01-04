@@ -2,7 +2,7 @@ import random
 
 
 class Snake:
-    def __init__(self, canvas, cell_size, start_pos, color):
+    def __init__(self, canvas, cell_size, start_pos, view_radius, color):
         self.canvas = canvas
         self.cell_size = cell_size
         self.color = color
@@ -12,6 +12,7 @@ class Snake:
         self.segments = [self.canvas.create_rectangle(x * self.cell_size, y * self.cell_size, x * self.cell_size + self.cell_size, y * self.cell_size + self.cell_size, fill='white') for x, y in self.position]
         self.head = self.position[-1]
         self.is_paused = False
+        self.view_radius = view_radius
         self.score = 0
 
     def pause(self):

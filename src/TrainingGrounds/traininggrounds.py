@@ -9,14 +9,14 @@ def main():
     window.tk.call('tk', 'scaling', 4.0)
     game = Level1(
         window,
-        800,
-        800,
-        25,
-        40,
-        20,
-        2,
-        4,
-        10
+        width=800,
+        height=800,
+        cell_size=25,
+        speed=1,
+        food_count=3,
+        bot_count=3,
+        bot_view_distance=4,
+        train_epochs=500
     )
     game.play()
     window.mainloop()
