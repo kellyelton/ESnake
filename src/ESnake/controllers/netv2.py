@@ -32,8 +32,11 @@ class LayerV2:
         self.num_inputs_per_neuron = num_inputs_per_neuron
         if activation_fn is None:
             activation_fn = Activations.random_activation_function()
+        
+        self.activation_fn = activation_fn
+
         for i in range(num_neurons):
-            neuron = NeuronV2(num_inputs_per_neuron, activation_fn)
+            neuron = NeuronV2(num_inputs_per_neuron, self.activation_fn)
             self.neurons.append(neuron)
 
     def forward(self, inputs):
@@ -63,7 +66,7 @@ class NetV2:
         else:
             self.hidden_layers = hidden_layers
 
-    def randomLayers(self, inputs, outputs, min_layers=1, max_layers=9, min_neurons=1, max_neurons=9):
+    def randomLayers(self, inputs, outputs, min_layers=1, max_layers=6, min_neurons=1, max_neurons=12):
         config = []
 
         prevLayerSize = inputs
@@ -131,15 +134,40 @@ class NetV2:
 #                    new_net.hidden_layers.pop()
 
         for layer in new_net.hidden_layers:
-            #if random.random() < 0.05:
-            #    # Add or remove a neuron
-            #    if random.random() < 0.5:
-            #        # Add a neuron
-            #        layer.neurons.append(NeuronV2(layer.neurons[0].weights.size))
-            #    else:
-            #        # Remove a neuron
-            #        if len(layer.neurons) > 1:
-            #            layer.neurons.pop()
+            # Don't add or remove neurons from the last layer
+            if random.random() < 0.05 and new_net.hidden_layers.index(layer) != len(new_net.hidden_layers) - 1:
+                print("\a", end="", flush=True)
+                print("\a", end="", flush=True)
+                print("\a", end="", flush=True)
+                print("\a", end="", flush=True)
+
+                # Add or remove a neuron
+                if random.random() < 0.5:
+                    # Add a neuron at a random index
+                    new_neuron = NeuronV2(layer.num_inputs_per_neuron)
+                    new_index = random.randint(0, len(layer.neurons))
+                    layer.neurons.insert(new_index, new_neuron)
+                    
+                    # update the next layer's input size and weights
+                    next_layer_index = new_net.hidden_layers.index(layer) + 1
+                    if next_layer_index < len(new_net.hidden_layers):
+                        next_layer = new_net.hidden_layers[next_layer_index]
+                        next_layer.num_inputs_per_neuron += 1
+                        for neuron in next_layer.neurons:
+                            neuron.weights = np.insert(neuron.weights, new_index, 0)
+                else:
+                    # Remove a random neuron from the layer
+                    if len(layer.neurons) > 1:
+                        removed_index = random.randint(0, len(layer.neurons) - 1)
+                        layer.neurons.pop(removed_index)
+
+                        # update the next layer's input size and weights
+                        next_layer_index = new_net.hidden_layers.index(layer) + 1
+                        if next_layer_index < len(new_net.hidden_layers):
+                            next_layer = new_net.hidden_layers[next_layer_index]
+                            next_layer.num_inputs_per_neuron -= 1
+                            for neuron in next_layer.neurons:
+                                neuron.weights = np.delete(neuron.weights, removed_index)
 
             # only change if not the last layer
             is_last_layer = layer == new_net.hidden_layers[-1]
@@ -150,7 +178,7 @@ class NetV2:
                     neuron.activation_fn = layer.activation_fn
 
             for neuron in layer.neurons:
-                if random.random() < 0.01 and not is_last_layer:
+                if random.random() < 0.005 and not is_last_layer:
                     # Change the activation function
                     neuron.activation_fn = Activations.random_activation_function()
                 
@@ -158,7 +186,7 @@ class NetV2:
                     if random.random() < 0.05:
                         # Change the weight
                         # increase or decrease by 0.5% of the existing value at most
-                        neuron.weights[i] = neuron.weights[i] * (1 + random.random() * 0.005)
+                        neuron.weights[i] = neuron.weights[i] * (1 + random.random() * 0.0005)
 
                         # weight can be between -1 and 1
                         if neuron.weights[i] > 1:
@@ -169,7 +197,7 @@ class NetV2:
                 if random.random() < 0.05:
                     # mutate the bias
                     # increase or decrease by 0.5% of the existing value at most
-                    neuron.bias = neuron.bias * (1 + random.random() * 0.005)
+                    neuron.bias = neuron.bias * (1 + random.random() * 0.0005)
 
                     # bias can be between -1 and 1
                     if neuron.bias > 1:

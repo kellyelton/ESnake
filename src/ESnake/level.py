@@ -12,7 +12,7 @@ from .controllers import Dylan, Automatic
 class Level:
     @staticmethod
     def default():
-        return Level(60, 60, 5, 200, 30)
+        return Level(80, 60, 5, 200, 30)
 
     def __init__(self, width, height, speed, foodCount, botCount):
         self.logger = logging.getLogger(__name__)
@@ -90,9 +90,16 @@ class Level:
         return location
 
     def update(self, app, time):
-        self.initialFoodCount = 20
-        while len(self.foods) > self.initialFoodCount:
-            self.foods.pop()
+        #self.initialFoodCount = 100
+        #while len(self.foods) > self.initialFoodCount:
+        #    self.foods.pop()
+        #
+        #while len(self.foods) < self.initialFoodCount:
+        #    location = self.randomEmptyLocation
+        #    food = Food(location)
+        #    self.updateLocation(food)
+        #    self.foods.append(food)
+#
         time = time + self.timeOffset
 
         if self.startTime is None:
@@ -218,8 +225,7 @@ class Level:
 
     def refreshOccupiedLocations(self):
         if self.occupiedLocations is None:
-            self.occupiedLocations = np.empty(
-                shape=(self.height, self.width), dtype='object')
+            self.occupiedLocations = np.empty(shape=(self.width, self.height), dtype='object')
         else:
             self.occupiedLocations.fill(None)
 
@@ -228,23 +234,19 @@ class Level:
 
         if self.player is not None:
             for segment in self.player.segments:
-                self.occupiedLocations[segment.location[0]
-                                       ][segment.location[1]] = self.player
+                self.occupiedLocations[segment.location[0]][segment.location[1]] = self.player
 
         for bot in self.bots:
             for segment in bot.segments:
-                self.occupiedLocations[segment.location[0]
-                                       ][segment.location[1]] = bot
+                self.occupiedLocations[segment.location[0]][segment.location[1]] = bot
 
         for x in range(self.width):
-            self.occupiedLocations[0][x] = Wall((x, 0))
-            self.occupiedLocations[self.height -
-                                   1][x] = Wall((x, self.height - 1))
+            self.occupiedLocations[x][0] = Wall((x, 0)) # top
+            self.occupiedLocations[x][self.height - 1] = Wall((x, self.height - 1)) # bottom
 
         for y in range(self.height):
-            self.occupiedLocations[y][0] = Wall((0, y))
-            self.occupiedLocations[y][self.width -
-                                      1] = Wall((self.width - 1, y))
+            self.occupiedLocations[0][y] = Wall((0, y)) # left
+            self.occupiedLocations[self.width - 1][y] = Wall((self.width - 1, y)) # right
 
     def getContents(self, location):
         if self.isOutsideWall(location):
@@ -318,8 +320,8 @@ class Level:
         from email.mime.text import MIMEText
         from email.mime.multipart import MIMEMultipart
 
-        sender_email = ""
-        receiver_email = ""
+        sender_email = "its.the.doc@gmail.com"
+        receiver_email = "its.the.doc@gmail.com"
 
         message = MIMEMultipart("alternative")
         message["Subject"] = f'New Best Bot {botName} {bot.score}'
@@ -357,7 +359,7 @@ class Level:
 
         # Create secure connection with server and send email
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login("", "")
+            server.login("its.the.doc@gmail.com", "qhnwrjcjevptrsva")
             server.sendmail(
                 sender_email, receiver_email, message.as_string()
             )

@@ -187,27 +187,27 @@ class Snake(GameObject):
         self.viewLocationsCount = 3
         if self.direction == Direction.left():
             self.viewLocations = [
-                (head[0] - 1, head[1]),
-                (head[0], head[1] + 1),
-                (head[0], head[1] - 1)
+                (head[0] - 4, head[1]),
+                (head[0], head[1] + 4),
+                (head[0], head[1] - 4)
             ]
         elif self.direction == Direction.right():
             self.viewLocations = [
-                (head[0] + 1, head[1]),
-                (head[0], head[1] - 1),
-                (head[0], head[1] + 1)
+                (head[0] + 4, head[1]),
+                (head[0], head[1] - 4),
+                (head[0], head[1] + 4)
             ]
         elif self.direction == Direction.up():
             self.viewLocations = [
-                (head[0], head[1] - 1),
-                (head[0] - 1, head[1]),
-                (head[0] + 1, head[1])
+                (head[0], head[1] - 4),
+                (head[0] - 4, head[1]),
+                (head[0] + 4, head[1])
             ]
         elif self.direction == Direction.down():
             self.viewLocations = [
-                (head[0], head[1] + 1),
-                (head[0] + 1, head[1]),
-                (head[0] - 1, head[1])
+                (head[0], head[1] + 4),
+                (head[0] + 4, head[1]),
+                (head[0] - 4, head[1])
             ]
 
         self.viewContents = [

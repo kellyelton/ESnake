@@ -75,9 +75,9 @@ class PyInGameScreenEngine:
         topRect = pygame.Rect(playRect.topleft, (playRect.width, tileSize))
         leftRect = pygame.Rect(playRect.topleft, (tileSize, playRect.height))
         rightRect = pygame.Rect(
-            (playRect.topright[0] - tileSize, playRect.topright[1]), (tileSize, playRect.height))
+            (playRect.right - tileSize, playRect.top), (tileSize, playRect.height))
         bottomRect = pygame.Rect(
-            (playRect.bottomleft[0], playRect.bottomleft[1] - tileSize), (playRect.width, tileSize))
+            (playRect.left, playRect.bottom - tileSize), (playRect.width, tileSize))
 
         pygame.draw.rect(pyscreen, borderColor, topRect, 0)
         pygame.draw.rect(pyscreen, borderColor, leftRect, 0)
@@ -157,7 +157,7 @@ class PyInGameScreenEngine:
 
         playerSegmentCount = len(bot.segments)
         for index, segment in enumerate(reversed(bot.segments)):
-            index_percent = max(0.5, index / playerSegmentCount)
+            index_percent = max(0.05, index / playerSegmentCount)
             playerLocation = segment.location
             realIndex = (playerSegmentCount - index - 1)
 
@@ -176,17 +176,17 @@ class PyInGameScreenEngine:
                 fillColor = bot_color
                 fillColor = (fillColor[0] * index_percent, fillColor[1] * index_percent, fillColor[2] * index_percent)
 
-            if not isHeadSection:
-                drawLocation.inflate_ip(-4, -4)
+            #if not isHeadSection:
+            #    drawLocation.inflate_ip(-4, -4)
 
             pygame.draw.rect(pyscreen, fillColor, drawLocation, 0)
 
         # draw energy bar
-        fillColor = app.engine.style.playerEnergyBarColor
-        drawLocation[3] = drawLocation[3] * 0.10
-        # energy is a number between 0 and 1
-        drawLocation[2] = drawLocation[2] * bot.energy
-        pygame.draw.rect(pyscreen, fillColor, drawLocation, 0)
+        #fillColor = app.engine.style.playerEnergyBarColor
+        #drawLocation[3] = drawLocation[3] * 0.10
+        ## energy is a number between 0 and 1
+        #drawLocation[2] = drawLocation[2] * bot.energy
+        #pygame.draw.rect(pyscreen, fillColor, drawLocation, 0)
 
         # draw bot view locations, using green circles
         if app.debug.botViewLocations:
@@ -226,19 +226,19 @@ class PyInGameScreenEngine:
                         # pink
                         color = (255, 0, 255)
                     else:
-                        raise "invalid contents"                    
+                        raise Exception("invalid contents")
 
                     pygame.draw.circle(pyscreen, color, drawLocation.center, 2)
         
             # if the bot was created within the last 2 seconds, draw a little white circle in the middle of it
-            adj_time = self.level.timeOffset + now
-            bst = bot.startTime
-            if bst is None:
-                bst = adj_time
-            if adj_time - bst < 2000:
-                drawLocation = pygame.Rect(self.getLocationRect(app, pyscreen, bot.segments[0].location))
-                drawLocation.inflate_ip(-2, -2)
-                pygame.draw.circle(pyscreen, (255, 255, 255), drawLocation.center, 2)
+            #adj_time = self.level.timeOffset + now
+            #bst = bot.startTime
+            #if bst is None:
+            #    bst = adj_time
+            #if adj_time - bst < 2000:
+            #    drawLocation = pygame.Rect(self.getLocationRect(app, pyscreen, bot.segments[0].location))
+            #    drawLocation.inflate_ip(-2, -2)
+            #    pygame.draw.circle(pyscreen, (255, 255, 255), drawLocation.center, 2)
 
             # draw little triangle on bot head pointing in direction of movement
             #drawLocation = pygame.Rect(
@@ -282,9 +282,11 @@ class PyInGameScreenEngine:
 
             drawRect = pygame.Rect(drawLocation)
 
-            drawRect = drawRect.inflate(-8, -8)
-
-            pygame.draw.rect(pyscreen, app.engine.style.foodColor, drawRect, 0)
+            drawBack = drawRect.inflate(-10, -10)
+            drawRect = drawRect.inflate(-14, -14)
+            
+            pygame.draw.rect(pyscreen, (10, 10, 10), drawBack, 0)
+            pygame.draw.rect(pyscreen, (45, 95, 45), drawRect, 0)
 
     def drawScore(self, app, pyscreen):
         screenrect = pyscreen.get_rect()
@@ -365,7 +367,7 @@ class PyInGameScreenEngine:
         rect = pygame.Rect(0, 0, self.__level.width *
                            tileSize, self.__level.height * tileSize)
 
-        rect.center = pyscreen.get_rect().center
+        rect.midleft = pyscreen.get_rect().midleft
 
         return rect
 
