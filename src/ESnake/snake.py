@@ -1,10 +1,11 @@
 import logging
+import math
 
 from . import Direction, GameObject, SnakeSegment
 
 
 class Snake(GameObject):
-    def __init__(self, speed, location, tags, controller=None):
+    def __init__(self, speed, location, tags, controller):
         tags.append("snake")
 
         super().__init__(tags)
@@ -29,6 +30,8 @@ class Snake(GameObject):
         self.viewLocations: list = None
         self.viewLocationsCount = 0
         self.viewContents: list = None
+        self.view2: list = None
+        self.view2Count = 0
 
     def update(self, app, time, level):
         if self.viewLocations is None:
@@ -37,8 +40,7 @@ class Snake(GameObject):
             if self.startTime is None:
                 self.startTime = time
 
-            if self.controller is not None:
-                self.controller.update(app, time, level, self)
+            self.controller.update(app, time, level, self)
 
             runSeconds = (time - self.startTime) / 1000
             self.speedBoost = runSeconds / 12
@@ -48,8 +50,7 @@ class Snake(GameObject):
 
             if msSinceLastMoved >= adjustedSpeed:
                 self.lastTimeMoved = time
-                if self.controller is not None:
-                    self.controller.move(app, time, level, self)
+                self.controller.move(app, time, level, self)
                 self.move(app, time, level)
 
     def move(self, app, time, level):
@@ -215,3 +216,88 @@ class Snake(GameObject):
             level.getContents(self.viewLocations[1]),
             level.getContents(self.viewLocations[2])
         ]
+
+        self.view2 = self.get_view_2(level, self.segments[0].location, self.direction, level.view2Distance)
+        self.view2Count = len(self.view2)
+    
+    def get_view_2(self, level, position, direction, distance):
+        # relative to the direction it's looking, normalized to face up.
+        # ray cast code, looks distance squares left, left-up, up, right-up, right
+        # each direction is [distance, direction, reward, punishment]
+        # result: [left, left-up, up, right-up, right]
+
+        # get the direction the snake is facing in radians
+        if direction == Direction.up():
+            # up (0, -1)
+            looking_direction = math.atan2(-1, 0)
+        elif direction == Direction.down():
+            # down (0, 1)
+            looking_direction = math.atan2(1, 0)
+        elif direction == Direction.left():
+            # left (-1, 0)
+            looking_direction = math.atan2(0, -1)
+        elif direction == Direction.right():
+            # right (1, 0)
+            looking_direction = math.atan2(0, 1)
+
+        # get the position of the snake's head
+        head_x = position[0]
+        head_y = position[1]
+
+        raycasts = [
+            [math.atan2(-1, 0), 0, 0, 0],
+            [math.atan2(-1, 1), 0, 0, 0],
+            [math.atan2(0, 1), 0, 0, 0],
+            [math.atan2(1, 1), 0, 0, 0],
+            [math.atan2(1, 0), 0, 0, 0]
+        ]
+
+        for i, raycast in enumerate(raycasts):
+            raycast_direction = raycast[0] 
+
+            dv = (direction.x, direction.y)
+
+            # rotate dv by the raycast direction
+            nd = (
+                dv[0] * math.cos(raycast_direction) - dv[1] * math.sin(raycast_direction),
+                dv[0] * math.sin(raycast_direction) + dv[1] * math.cos(raycast_direction)
+            )
+
+            # cast to int, but round to ceil
+            # if negative, round to floor
+            normalized_direction = (
+                round(nd[0]),
+                round(nd[1])
+            )
+            
+            # get the position of the first square in the direction
+            x = head_x + normalized_direction[0]
+            y = head_y + normalized_direction[1]
+
+            # ray cast in the direction
+            for d in range(distance):
+                entity = level.getContents((x, y))
+                if entity is not None:
+                    # 0 being farthest away, 1 being closest
+                    edistance = 1 - ((d + 1) / distance)
+                    raycasts[i][1] = edistance
+                    
+                    if "wall" in entity.tags:
+                        raycasts[i][2] = 0
+                        raycasts[i][3] = 1
+                    elif "food" in entity.tags:
+                        raycasts[i][2] = 1
+                        raycasts[i][3] = 0
+                    else:
+                        raycasts[i][2] = 0
+                        raycasts[i][3] = 1
+
+                    break
+                x += normalized_direction[0]
+                y += normalized_direction[1]
+            else:
+                raycasts[i][1] = 0
+                raycasts[i][2] = 0
+                raycasts[i][3] = 0
+            
+        return raycasts

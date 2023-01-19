@@ -18,7 +18,7 @@ class PyLoadingScreenEngine:
         now = pygame.time.get_ticks()
 
         if self.__state == "initializing":
-            self.__state = "updating"
+            self.__state = "loading"
             self.__updater.start()
             self.status = self.__updater.status
             self.minorstatus = self.__updater.minorstatus

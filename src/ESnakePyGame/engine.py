@@ -27,7 +27,7 @@ class PyGameEngine:
     def screenEngine(self, screenEngine):
         self.logger.debug(f"Screen Engine changed to {screenEngine}")
 
-        if self._screenEngine != None:
+        if self._screenEngine is not None:
             if hasFunction(self._screenEngine, "stop"):
                 self._screenEngine.stop()
 

@@ -6,7 +6,7 @@ import threading
 import time
 from random import randint
 from . import updateHighScore, AppScreen, Snake, Food, Wall, GameObject
-from .controllers import Dylan, Automatic
+from .controllers import Dylan2, Automatic, Player
 
 
 class Level:
@@ -29,6 +29,7 @@ class Level:
         self.maxBotCount = self.initialBotCount
         self.locations = [[None for x in range(width)] for y in range(height)]
         self.lastUpdateTime = 0
+        self.view2Distance = 10
 
         for i in range(self.initialFoodCount):
             location = self.randomEmptyLocation
@@ -36,13 +37,13 @@ class Level:
             self.updateLocation(food)
             self.foods.append(food)
 
-        self.player = Snake(speed, self.center, ["player"])
+        self.player = Snake(speed, self.center, ["player"], Player(self.view2Distance, (230, 20, 20), "Player 1"))
         self.updateLocation(self.player)
 
         self.bots = []
         for i in range(self.initialBotCount):
             location = self.randomEmptyLocation
-            snake = Snake(speed, location, ["bot"], Dylan())
+            snake = Snake(speed, location, ["bot"], Dylan2(self.view2Distance))
             self.updateLocation(snake)
             self.bots.append(snake)
         
@@ -182,14 +183,14 @@ class Level:
                 create_new_bot_chance = 1.0 - (0.95 * (len(self.bestBots) / 100))
 
                 if not has_best_bots:
-                    newController = Dylan()
+                    newController = Dylan2(self.view2Distance)
                 elif random.random() > create_new_bot_chance:
                     random_best = random.choice(self.bestBots)
                     while isinstance(random_best.controller, Automatic):
                         random_best = random.choice(self.bestBots)
-                    newController = Dylan(random_best.controller)
+                    newController = Dylan2(self.view2Distance, random_best.controller)
                 else:
-                    newController = Dylan()
+                    newController = Dylan2(self.view2Distance)
 
                 newBot = Snake(bot.speed, self.randomEmptyLocation, ["bot"], newController)
 
@@ -213,7 +214,7 @@ class Level:
 
         best = self.bestBots[0]
 
-        newController = Dylan(best.controller, mutate=False)
+        newController = Dylan2(self.view2Distance, best.controller, mutate=False)
         newbest = Snake(best.speed, self.randomEmptyLocation,
                         ["bot", "best"], newController)
 

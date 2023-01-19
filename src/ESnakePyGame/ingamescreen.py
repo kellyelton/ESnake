@@ -1,3 +1,4 @@
+import math
 import pygame
 import logging
 from ESnake import Direction, AppScreen, App, Level, Food, Snake, Wall
@@ -15,6 +16,7 @@ class PyInGameScreenEngine:
         self.__level: Level = level
         self.__playerDeadSections: int = 0
         self.__lastDeadSectionAdded: int = 0
+        self.__oldSegments: list = []
 
     @property
     def level(self): return self.__level
@@ -22,11 +24,49 @@ class PyInGameScreenEngine:
     def processEvent(self, app, event):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
-                self.logger.debug("Requested Direction changed to Left")
-                self.__level.player.requestedDirection = Direction.left()
+                cur_dir = self.__level.player.direction
+
+                if cur_dir == Direction.left():
+                    self.__level.player.requestedDirection = Direction.none()
+                elif cur_dir == Direction.right():
+                    self.__level.player.requestedDirection = Direction.none()
+                elif cur_dir == Direction.up():
+                    self.__level.player.requestedDirection = Direction.left()
+                elif cur_dir == Direction.down():
+                    self.__level.player.requestedDirection = Direction.right()
             elif event.key == pygame.K_RIGHT:
-                self.logger.debug("Requested Direction changed to Right")
-                self.__level.player.requestedDirection = Direction.right()
+                cur_dir = self.__level.player.direction
+                
+                if cur_dir == Direction.left():
+                    self.__level.player.requestedDirection = Direction.none()
+                elif cur_dir == Direction.right():
+                    self.__level.player.requestedDirection = Direction.none()
+                elif cur_dir == Direction.up():
+                    self.__level.player.requestedDirection = Direction.right()
+                elif cur_dir == Direction.down():
+                    self.__level.player.requestedDirection = Direction.left()
+            elif event.key == pygame.K_UP:
+                cur_dir = self.__level.player.direction
+                
+                if cur_dir == Direction.down():
+                    self.__level.player.requestedDirection = Direction.none()
+                elif cur_dir == Direction.left():
+                    self.__level.player.requestedDirection = Direction.right()
+                elif cur_dir == Direction.right():
+                    self.__level.player.requestedDirection = Direction.left()
+                elif cur_dir == Direction.up():
+                    self.__level.player.requestedDirection = Direction.none()
+            elif event.key == pygame.K_DOWN:
+                cur_dir = self.__level.player.direction
+                
+                if cur_dir == Direction.up():
+                    self.__level.player.requestedDirection = Direction.none()
+                elif cur_dir == Direction.left():
+                    self.__level.player.requestedDirection = Direction.left()
+                elif cur_dir == Direction.right():
+                    self.__level.player.requestedDirection = Direction.right()
+                elif cur_dir == Direction.up():
+                    self.__level.player.requestedDirection = Direction.none()
             elif event.key == pygame.K_ESCAPE:
                 self.logger.debug("esc pressed, switch to post game")
                 app.screen = AppScreen.PostGame
@@ -59,11 +99,12 @@ class PyInGameScreenEngine:
 
         pyscreen.fill(app.engine.style.gameBackgroundColor)
 
-        self.drawBorder(app, pyscreen)
+        self.drawOldSegments(app, pyscreen)
         self.drawFood(app, pyscreen)
         self.drawPlayer(app, pyscreen, now)
         self.drawBots(app, pyscreen, now)
         self.drawScore(app, pyscreen)
+        self.drawBorder(app, pyscreen)
 
     def drawBorder(self, app, pyscreen):
         borderColor = app.engine.style.inGameWallColor
@@ -99,38 +140,7 @@ class PyInGameScreenEngine:
                 self.__lastDeadSectionAdded = now
                 self.__playerDeadSections += 1
 
-        playerSegmentCount = len(self.__level.player.segments)
-        for index, segment in enumerate(reversed(self.__level.player.segments)):
-            playerLocation = segment.location
-
-            realIndex = (playerSegmentCount - index - 1)
-
-            isHeadSection = index == playerSegmentCount - 1
-
-            drawLocation = pygame.Rect(
-                self.getLocationRect(app, pyscreen, playerLocation))
-
-            fillColor = None
-
-            if isHeadSection:
-                fillColor = app.engine.style.playerHeadColor
-            else:
-                fillColor = app.engine.style.playerBodyColor
-
-            if not isHeadSection:
-                drawLocation.inflate_ip(-4, -4)
-
-            pygame.draw.rect(pyscreen, fillColor, drawLocation, 0)
-
-            if app.debug.playerLocation:
-                string = f"{playerLocation[0]}, {playerLocation[1]}"
-                text = self.__debugFont.render(
-                    string, True, (255, 0, 0), (255, 255, 255))
-
-                textRect = text.get_rect()
-                textRect.topleft = (drawLocation[0], drawLocation[1])
-
-                pyscreen.blit(text, textRect)
+        self.drawSnake(app, pyscreen, now, self.__level.player)
 
     def drawBots(self, app, pyscreen, now):
         for bot in self.__level.bots:
@@ -152,34 +162,40 @@ class PyInGameScreenEngine:
 
                 pyscreen.blit(text, textRect)
             return
+    
+        self.drawSnake(app, pyscreen, now, bot)
 
-        bot_color = bot.controller.color
+    def drawSnake(self, app, pyscreen, now, snake):
+        snake_color = snake.controller.color
 
-        playerSegmentCount = len(bot.segments)
-        for index, segment in enumerate(reversed(bot.segments)):
-            index_percent = max(0.05, index / playerSegmentCount)
-            playerLocation = segment.location
-            realIndex = (playerSegmentCount - index - 1)
+        snakeSegmentCount = len(snake.segments)
+        for index, segment in enumerate(reversed(snake.segments)):
+            index_percent = max(0.05, index / snakeSegmentCount)
+            snakeLocation = segment.location
+            realIndex = (snakeSegmentCount - index - 1)
 
-            isHeadSection = index == playerSegmentCount - 1
-
-            drawLocation = pygame.Rect(
-                self.getLocationRect(app, pyscreen, playerLocation))
+            isHeadSection = index == snakeSegmentCount - 1
 
             fillColor = None
 
             if isHeadSection:
-                fillColor = bot_color
-                
-                fillColor = (fillColor[0] * bot.energy, fillColor[1] * bot.energy, fillColor[2] * bot.energy)
+                fillColor = snake_color
+                fillColor = (fillColor[0] * snake.energy, fillColor[1] * snake.energy, fillColor[2] * snake.energy)
+
+                self.__oldSegments.append((snakeLocation, fillColor, 0))
+
+                drawLocation = pygame.Rect(self.getLocationRect(app, pyscreen, snakeLocation))
+                drawLocation.inflate_ip(-10, -10)
+                pygame.draw.circle(pyscreen, fillColor, drawLocation.center, drawLocation.width)
             else:
-                fillColor = bot_color
-                fillColor = (fillColor[0] * index_percent, fillColor[1] * index_percent, fillColor[2] * index_percent)
+                fillColor = snake_color
+                fillColor = (fillColor[0] * index_percent, fillColor[1] * index_percent, fillColor[2] * index_percent, snake.energy)
 
-            #if not isHeadSection:
-            #    drawLocation.inflate_ip(-4, -4)
-
-            pygame.draw.rect(pyscreen, fillColor, drawLocation, 0)
+                # draw circle at playerLocation
+                drawLocation = pygame.Rect(self.getLocationRect(app, pyscreen, snakeLocation))
+                drawLocation.inflate_ip(-8, -8)
+                size = int(( drawLocation.width) * index_percent)
+                pygame.draw.circle(pyscreen, fillColor, drawLocation.center, size)
 
         # draw energy bar
         #fillColor = app.engine.style.playerEnergyBarColor
@@ -188,93 +204,107 @@ class PyInGameScreenEngine:
         #drawLocation[2] = drawLocation[2] * bot.energy
         #pygame.draw.rect(pyscreen, fillColor, drawLocation, 0)
 
-        # draw bot view locations, using green circles
-        if app.debug.botViewLocations:
-            if bot.viewLocations is not None:
+        if app.debug.botView2:
+            # view2 = [[direction, distance, entity], ...]]
+            if snake.view2 is not None:
+                snake_location = snake.segments[0].location
+                
+                snake_direction = (snake.direction.x, snake.direction.y)
+
                 # different color for each location
-                for index, location in enumerate(bot.viewLocations):
-                    drawLocation = pygame.Rect(
-                        self.getLocationRect(app, pyscreen, location))
-                    drawLocation.inflate_ip(-4, -4)
+                for index, view in enumerate(snake.view2):
+                    view_direction_radians = view[0]
+                    distance = (((1 - view[1])) * (self.level.view2Distance)) * self.getTileSize(pyscreen)
+                    reward = view[2]
+                    punishment = view[3]
 
-                    contents = bot.viewContents[index]
-
+                    thickness = 1
                     color = (255, 255, 255)
 
-                    if contents is None:
-                        # nothing, probably outside of bounds
-                        # dark grey
-                        color = (100, 100, 100)
-                    elif contents is bot:
-                        # self
-                        # cyan
-                        color = (0, 255, 255)
-                    elif isinstance(contents, Food):
-                        # Food to eat
+                    if reward == 1:
+                        # goodness
                         # green
                         color = (0, 255, 0)
-                    elif isinstance(contents, Snake):
-                        # other ai snek
+                        thickness = 2
+                    elif punishment == 1:
+                        # death
                         # red
                         color = (255, 0, 0)
-                    elif contents is self.level.player:
-                        # other snek, player snek
-                        # orange red
-                        color = (255, 69, 0)
-                    elif isinstance(contents, Wall):
-                        # wall
-                        # pink
-                        color = (255, 0, 255)
+                        thickness = 2
                     else:
-                        raise Exception("invalid contents")
+                        # unknown
+                        # white
+                        color = (snake_color[0] - 25, snake_color[1] - 25, snake_color[2] - 25)
+                        thickness = 1
 
-                    pygame.draw.circle(pyscreen, color, drawLocation.center, 2)
+                    # find the endpoint
+                    
+                    # get the center of the bot
+                    snakeRect = pygame.Rect(
+                        self.getLocationRect(app, pyscreen, snake_location))
+                    snakeRect.center = snakeRect.center
+
+                    # correct the angle based on the bot's direction
+                    view_direction_radians += math.atan2(
+                        snake_direction[1], snake_direction[0])
+
+                    # get the endpoint
+                    endPoint = (
+                        snakeRect.center[0] + (distance * math.cos(view_direction_radians)),
+                        snakeRect.center[1] + (distance * math.sin(view_direction_radians))
+                    )
+
+                    pygame.draw.line(pyscreen, color, snakeRect.center, endPoint, thickness)
+
+        if app.debug.botDirection and snake.viewLocations is not None:
+            snake_location = snake.segments[0].location
+
+            # draw a line from the bot to the direction
+            # get the center of the bot
+            snakeRect = pygame.Rect(
+                self.getLocationRect(app, pyscreen, snake_location))
+            snakeRect.center = snakeRect.center
+
+            # get the angle
+            angle = math.atan2(
+                snake.direction.y, snake.direction.x)
+
+            # get the end point
+            endPoint = (
+                snakeRect.center[0] + (snakeRect.width * math.cos(angle)),
+                snakeRect.center[1] + (snakeRect.height * math.sin(angle))
+            )
+
+            pygame.draw.line(pyscreen, (255, 155, 255),
+                             snakeRect.center, endPoint, 2)
         
-            # if the bot was created within the last 2 seconds, draw a little white circle in the middle of it
-            #adj_time = self.level.timeOffset + now
-            #bst = bot.startTime
-            #if bst is None:
-            #    bst = adj_time
-            #if adj_time - bst < 2000:
-            #    drawLocation = pygame.Rect(self.getLocationRect(app, pyscreen, bot.segments[0].location))
-            #    drawLocation.inflate_ip(-2, -2)
-            #    pygame.draw.circle(pyscreen, (255, 255, 255), drawLocation.center, 2)
+    def drawOldSegments(self, app, pyscreen):
+        for i, segment in enumerate(self.__oldSegments):
+            drawLocation = segment[0]
+            fillColor = segment[1]
+            age = segment[2]
 
-            # draw little triangle on bot head pointing in direction of movement
-            #drawLocation = pygame.Rect(
-            #    self.getLocationRect(app, pyscreen, bot.segments[0].location))
-            #drawLocation.inflate_ip(-4, -4)
-#
-            #center = drawLocation.center
-            #width = drawLocation.width
-            #height = drawLocation.height
-#
-            #if bot.direction == Direction.up():
-            #    points = [
-            #        (center[0], center[1] - height / 2),
-            #        (center[0] - width / 2, center[1] + height / 2),
-            #        (center[0] + width / 2, center[1] + height / 2)
-            #    ]
-            #elif bot.direction == Direction.down():
-            #    points = [
-            #        (center[0], center[1] + height / 2),
-            #        (center[0] - width / 2, center[1] - height / 2),
-            #        (center[0] + width / 2, center[1] - height / 2)
-            #    ]
-            #elif bot.direction == Direction.left():
-            #    points = [
-            #        (center[0] - width / 2, center[1]),
-            #        (center[0] + width / 2, center[1] - height / 2),
-            #        (center[0] + width / 2, center[1] + height / 2)
-            #    ]
-            #elif bot.direction == Direction.right():
-            #    points = [
-            #        (center[0] + width / 2, center[1]),
-            #        (center[0] - width / 2, center[1] - height / 2),
-            #        (center[0] - width / 2, center[1] + height / 2)
-            #    ]
-#
-            #pygame.draw.polygon(pyscreen, (255, 0, 0), points)
+            # age is between 0 and 1, incrementing by 0.01 each frame
+            age += 0.02
+
+            self.__oldSegments[i] = (drawLocation, fillColor, age)
+
+            if age >= 1:
+                # remove the old segment
+                self.__oldSegments.pop(i)
+                continue
+            
+            color_scale = 10
+            fillColor = (fillColor[0] * ((1 - age) / color_scale), fillColor[1] * ((1 - age) / color_scale), fillColor[2] * ((1 - age) / color_scale), age)
+
+            drawLocation = self.getLocationRect(app, pyscreen, drawLocation)
+            
+            drawRect = pygame.Rect(drawLocation)
+            #drawRect.inflate_ip(-10, -)
+            drawRect.inflate_ip((20 * (age)) - 5, (20 * (age)) - 5)
+
+            #pygame.draw.rect(pyscreen, fillColor, drawRect)
+            pygame.draw.circle(pyscreen, fillColor, drawRect.center, drawRect.width)
 
     def drawFood(self, app, pyscreen):
         for food in self.__level.foods:
@@ -282,8 +312,8 @@ class PyInGameScreenEngine:
 
             drawRect = pygame.Rect(drawLocation)
 
-            drawBack = drawRect.inflate(-10, -10)
-            drawRect = drawRect.inflate(-14, -14)
+            drawBack = drawRect.inflate(-6, -6)
+            drawRect = drawRect.inflate(-10, -10)
             
             pygame.draw.rect(pyscreen, (10, 10, 10), drawBack, 0)
             pygame.draw.rect(pyscreen, (45, 95, 45), drawRect, 0)
