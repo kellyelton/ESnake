@@ -7,6 +7,8 @@ class Direction:
         if direction is None:
             self.string = "none"
             self.num = -1
+            self.x = 0
+            self.y = 0
             return
 
         if isinstance(direction, str):
@@ -15,18 +17,28 @@ class Direction:
             if direction == "left".casefold(): 
                 self.string = "left"
                 self.num = 0
+                self.x = -1
+                self.y = 0
             elif direction == "right".casefold():
                 self.string = "right"
                 self.num = 1 
+                self.x = 1
+                self.y = 0
             elif direction == "up".casefold():
                 self.string = "up"
                 self.num = 2
+                self.x = 0
+                self.y = -1
             elif direction == "down".casefold():
                 self.string = "down"
                 self.num = 3
+                self.x = 0
+                self.y = 1
             elif direction == "none".casefold():
                 self.string = "none"
                 self.num = -1
+                self.x = 0
+                self.y = 0
             else: raise Exception("Invalid direction: " + str(direction))
         else: raise Exception("Invalid direction: " + str(direction))
 
