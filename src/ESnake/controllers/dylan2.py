@@ -14,11 +14,11 @@ class Dylan2:
 
         self.view_distance = view_distance
 
-        # inputs = [energy, direction, distance, reward, punishment, direction, distance, reward, punishment, ...]
-        # outputs = [speed, left, right, none]
+        # inputs = [direction, distance, reward, punishment, direction, distance, reward, punishment, ...]
+        # outputs = [left, right, none]
 
-        inputCount = (4 * 5) + 1
-        outputCount = 4
+        inputCount = (4 * 5)
+        outputCount = 3
 
         if parent is None:
             self.net = NetV2(inputCount, outputCount)
@@ -40,7 +40,6 @@ class Dylan2:
     def move(self, app, time, level, snake):
         # flatten view
         inputs = [
-            snake.energy
         ]
         for direction, distance, reward, punishment in snake.view2:
             inputs.append(direction)
@@ -58,11 +57,9 @@ class Dylan2:
             if output < 0 or output > 1:
                 raise Exception("Output is not between 0 and 1")
 
-        # outputs = [speed, left, right, none]
+        # outputs = [left, right, none]
 
-        snake.speed = outputs[0] * snake.max_speed
-
-        req_direction = outputs.index(max(outputs[0:3]))
+        req_direction = outputs.index(max(outputs))
     
         if req_direction == 0:
             snake.requestedDirection = Direction.left()
